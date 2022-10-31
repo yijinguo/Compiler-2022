@@ -22,6 +22,10 @@ public class ClassDefNode extends ASTNode{
         return varMem.containsKey(name);
     }
 
+    public boolean have_func(String name){
+        return funcMem.containsKey(name);
+    }
+
     public ClassDefNode(position pos, String name){
         super(pos);
         this.name = name;

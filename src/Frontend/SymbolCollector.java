@@ -23,23 +23,19 @@ public class SymbolCollector implements ASTVisitor{
         it.DefList.forEach(def -> def.accept(this));
     }
 
-    public void visit(ClassDefNode it){
-        if (!classCollected) {
-            if (GlobalScope.haveType(it.name)) throw new syntaxError("Class name exists", it.pos);
-            Type newType = new Type(it.name);
-            newType.classDecl = it;
-            GlobalScope.add_type(newType,it.pos);
-        } else {
-            classVisiting = it;
-            if (classVisiting.classBuilder == null) throw new syntaxError("Lack Constructor", it.pos);
-            //if (classVisiting.constructor.size() > 1) throw new syntaxError("Multiple Constructor Definitions", it.pos);
-            //visit(classVisiting.constructor.get(0));
-            visit(classVisiting.classBuilder);
-            for (VarDefNode vars: classVisiting.varList) visit(vars);
-            for (FuncDefNode functions: classVisiting.funcList) visit(functions);
-
-            classVisiting = null;
-        }
+    public void visit(ClassDefNode it) {
+        if (GlobalScope.haveType(it.name)) throw new syntaxError("Class name exists", it.pos);
+        Type newType = new Type(it.name);
+        newType.classDecl = it;
+        GlobalScope.add_type(newType, it.pos);
+        classVisiting = it;
+        if (classVisiting.classBuilder == null) throw new syntaxError("Lack Constructor", it.pos);
+        //if (classVisiting.constructor.size() > 1) throw new syntaxError("Multiple Constructor Definitions", it.pos);
+        //visit(classVisiting.constructor.get(0));
+        visit(classVisiting.classBuilder);
+        for (VarDefNode vars : classVisiting.varList) visit(vars);
+        for (FuncDefNode functions : classVisiting.funcList) visit(functions);
+        classVisiting = null;
     }
     public void visit(ClassBuildNode it){ }
     public void visit(FuncDefNode it){
@@ -54,10 +50,10 @@ public class SymbolCollector implements ASTVisitor{
             for (FuncDefNode func : classVisiting.funcList)
                 if (func.funcName.equals(it.funcName)) throw new syntaxError("Renaming Class Member", it.pos);
         }
-        if (!classCollected) {
-            GlobalScope.add_func(it.funcName, it);
-        } else if (classVisiting != null) {
+        if (classVisiting != null) {
             classVisiting.funcList.add(it);
+        } else {
+            GlobalScope.add_func(it.funcName, it);
         }
     }
     public void visit(ParameterListNode it){ }

@@ -2,7 +2,9 @@ package Util.Scope;
 
 
 import AST.FuncDefNode;
+import AST.TypeNode;
 import AST.VarDefUnitNode;
+import AST.expr.ExprNode;
 import Util.error.semanticError;
 
 import java.util.HashMap;
@@ -18,11 +20,11 @@ public class Scope {
         this.parentScope = parentScope;
     }
 
-    public void add_var(String varName, VarDefUnitNode variable){
-        if (variableMembers.containsKey(varName) || functionMembers.containsKey(varName))
-            throw new semanticError("Variable Name Exits", variable.pos);
+    public void add_var(VarDefUnitNode unit){
+        if (variableMembers.containsKey(unit.varName) || functionMembers.containsKey(unit.varName))
+            throw new semanticError("Variable Name Exits", unit.pos);
         else
-            variableMembers.put(varName, variable);
+            variableMembers.put(unit.varName, unit);
     }
 
     public void add_func(String funcName, FuncDefNode function){
@@ -50,4 +52,11 @@ public class Scope {
         return null;
     }
 
+    public Scope getCurrentScope(){
+        return this;
+    }
+
+    public Scope getParentScope(){
+        return parentScope;
+    }
 }

@@ -1,6 +1,7 @@
 import AST.RootNode;
 import Frontend.ASTBuilder;
 //import Frontend.SemanticChecker;
+import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
 import Util.Scope.globalScope;
 import Util.MxErrorListener;
@@ -16,9 +17,9 @@ import grammar.*;
 public class Compiler {
 
     public static void main(String[] args) throws Exception{
-        String name="src/testcase.mx";
-        InputStream input=new FileInputStream(name);
-        //InputStream input = System.in;
+        //String name="src/testcase.mx";
+        //InputStream input=new FileInputStream(name);
+        InputStream input = System.in;
         try {
             RootNode root;
             globalScope GlobalScope=new globalScope(null);
@@ -38,8 +39,8 @@ public class Compiler {
             SymbolCollector symbolCollector=new SymbolCollector(GlobalScope);
             symbolCollector.visit(root);
             int debug = 1;
-          //  SemanticChecker semanticChecker=new SemanticChecker(globalScope);
-          //  semanticChecker.visit(root);
+            SemanticChecker semanticChecker=new SemanticChecker(GlobalScope);
+            semanticChecker.visit(root);
 
         }catch (Error err){
 //            System.out.println(err.errorMsg());
