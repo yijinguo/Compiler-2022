@@ -1,11 +1,15 @@
 package AST.expr;
 
 import AST.ASTVisitor;
+import AST.TypeNode;
+import Util.Type;
 import Util.position;
 
 public class FuncExprNode extends ExprNode{
     public ExprNode funcName;
     public ExprListNode lists;
+
+    public TypeNode returnType;
 
     public FuncExprNode(position pos){
         super(pos);

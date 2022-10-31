@@ -56,11 +56,13 @@ public class SemanticChecker implements ASTVisitor {
                 x.accept(this);
     }
     public void visit(VarDefNode it){
+        /*
         if (it.units != null) {
             for (VarDefUnitNode x : it.units) x.accept(this);
         }
         if (!GlobalScope.haveType(it.getTypeName()))
-            throw new semanticError("Undefined TyprName", it.pos);
+            throw new semanticError("Undefined TypeName", it.pos);
+        */
         for (VarDefUnitNode x : it.units) {
             VarDefUnitNode t = currentScope.getVar(x.varName);
             if (t != null) throw new semanticError("Variable Exists", it.pos);
@@ -92,7 +94,11 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(IfStmtNode it){
         it.condition.accept(this);
-        if (it.condition.type != BoolType) throw new semanticError("Not Condition Stmt", it.pos);
+        if (it.condition.funcDef == null) {
+            if (it.condition.type != BoolType) throw new semanticError("Not Condition Stmt", it.pos);
+        } else {
+            if (!it.condition.funcDef.returnType.type.typeName.equals("bool")) throw new semanticError("Not Condition Stmt", it.pos);
+        }
         if (it.thenStmts != null) {
             currentScope = new blockScope(currentScope);
             for (StmtNode x : it.thenStmts) x.accept(this);
@@ -105,20 +111,24 @@ public class SemanticChecker implements ASTVisitor {
         }
     }
     public void visit(ReturnStmtNode it){
-        if (it.expr != null) 
-            it.expr.accept(this);
-        Scope fScope = currentScope.getCurrentScope();
+        Scope fScope = currentScope;
+        if (it.expr == null) {
+            if (!((funcScope) fScope).returnType.type.typeName.equals("void"))
+                throw new semanticError("ReturnType not Match", it.pos);
+            return;
+        }
+        it.expr.accept(this);
         if (fScope == null) throw new syntaxError("Only Return in Functions", it.pos);
         if (fScope instanceof funcScope) {
-            if (((funcScope) fScope).isConstructor) {
-                if (it.expr != null) throw new semanticError("Constructor Has No Return", it.pos);
-            } else {
-                if (!it.expr.type.equals(((funcScope) fScope).returnType.type) && it.expr.type != null)
-                    throw new semanticError("ReturnType not Match", it.pos);
+            if (((funcScope) fScope).isConstructor) { //构造函数
+                if (it.expr.type != ((funcScope) fScope).returnType.type) throw new semanticError("Constructor Has Incorrect Return", it.pos);
+            } else { //普通函数
                 if (it.expr.type == null) {
                     TypeNode funcType = ((funcScope) fScope).returnType;
                     if (/*!funcType.isArray &&*/ (funcType.type == IntType || funcType.type == BoolType))
                         throw new semanticError("ReturnType not Match", it.pos);
+                } else if (!(it.expr.type == ((funcScope) fScope).returnType.type)) {
+                    throw new semanticError("ReturnType not Match", it.pos);
                 }
             }
         } else {
@@ -173,50 +183,65 @@ public class SemanticChecker implements ASTVisitor {
             throw new semanticError("Different Type", it.pos);
         it.type = it.lhs.type;
     }
-    public void visit(AtomExprNode it){}
+    public void visit(AtomExprNode it) {
+        String typeName = it.type.typeName;
+        if (typeName.equals("int") || typeName.equals("bool") || typeName.equals("string") || typeName.equals("null") || typeName.equals("this"))
+            return;
+        Scope s = new Scope(currentScope);
+        while (s != GlobalScope) {
+            s = s.parentScope;
+            if (s.getVar(it.str) != null) {
+                it.type.typeName = s.getVar(it.str).type.type.typeName;
+                return;
+            }
+            if (s.getFunc(it.str) != null) {
+                it.type.typeName = s.getFunc(it.str).returnType.type.typeName;
+                return;
+            }
+        }
+        throw new semanticError("Undefined Identify", it.pos);
+    }
     public void visit(BinaryExprNode it){
         it.lhs.accept(this);
         it.rhs.accept(this);
-        semanticError errors = new semanticError("Different Type", it.pos);
-        String op = it.op;
-        Type lType = it.lhs.type;
-        Type rType = it.rhs.type;
-        if (rType != NullType && lType != NullType && lType == rType) throw errors;
-        if (op.equals("==") || op.equals("!=")) {
-            if (it.lhs.type.isArray && rType != NullType) throw errors;
-            if (it.rhs.type.isArray && lType != NullType) throw errors;
-            if (lType == BoolType || lType == IntType) if (lType != rType) throw errors;
-            else if (lType != VoidType) {
-                if (rType != BoolType || rType != IntType || rType != VoidType) {
-                    if (lType != rType && rType != NullType) throw errors;
-                    if (lType == NullType)
-                        if (rType == BoolType || rType == IntType || rType == VoidType) throw errors;
-                }
-            }
+        if (it.lhs.type == null || it.rhs.type == null)
+            throw new semanticError("invalid expression", it.pos);
 
-            //it.type = new TypeNode(it.pos, BoolType, false);
-        } else if (op.equals("||") || op.equals("&&")) {
-            if (it.lhs.type.isArray || it.rhs.type.isArray) throw errors;
-            if (lType != BoolType || rType != BoolType) throw errors;
-            //it.type = new TypeNode(it.pos, BoolType, false);
-        } else if (op.equals("*") || op.equals("/") || op.equals("%") || op.equals("-")  ||
-                op.equals("|") || op.equals("&") || op.equals("<<") || op.equals(">>") || op.equals("^")) {
-            if (it.lhs.type.isArray || it.rhs.type.isArray) throw errors;
-            if (lType != IntType || rType != IntType) throw errors;
-            //it.type = new TypeNode(it.pos, IntType, false);
-        } else if (op.equals("+")) {
-            if (it.lhs.type.isArray || it.rhs.type.isArray) throw errors;
-           /* if (lType == IntType && rType == IntType)
-                it.type = new TypeNode(it.pos, IntType, false);
-            else if (lType == StringType && rType == StringType)
-                it.type = new TypeNode(it.pos, StringType, false);
-            else
-                throw errors;*/
-        } else if (op.equals("<") || op.equals("<=") || op.equals(">") || op.equals(">=")) {
-            if (it.lhs.type.isArray || it.rhs.type.isArray) throw errors;
-            if (!(lType == IntType && rType == IntType) && !(lType == StringType && rType == StringType)) throw errors;
-            //it.type = new TypeNode(it.pos, lType, false);
+        if (NullType.equals(it.lhs.type) || NullType.equals(it.rhs.type)) {
+            // maybe an object compare with null
+            if ((it.op.equals("==") || it.op.equals("!="))
+                    && (it.lhs.type.isReferenceType() || it.rhs.type.isReferenceType())) {
+                it.type = BoolType;
+                return;
+            } else if (!it.lhs.type.equals(it.rhs.type)) {
+                throw new semanticError("invalid expression", it.pos);
+            }
         }
+        if (VoidType.equals(it.lhs.type) || VoidType.equals(it.rhs.type))
+            throw new semanticError("invalid expression", it.pos);
+        if (!it.lhs.type.equals(it.rhs.type))
+            throw new semanticError("Type mismatch", it.pos);
+        switch (it.op) {
+            case "+": case "<=": case ">=": case "<": case ">":
+                if (!it.lhs.type.equals(IntType) && !it.lhs.type.equals(StringType))
+                    throw new semanticError("Type mismatch", it.pos);
+                it.type = it.op.equals("+") ? it.lhs.type : BoolType;
+                break;
+            case "*": case "/": case "%": case "-": case ">>":
+            case "<<": case "&": case "^": case "|":
+                if (!it.lhs.type.equals(IntType))
+                    throw new semanticError("Type mismatch", it.pos);
+                it.type = IntType;
+                break;
+            case "&&": case "||":
+                if (!it.lhs.type.equals(BoolType))
+                    throw new semanticError("Type mismatch", it.pos);
+                it.type = BoolType;
+                break;
+            default:
+                it.type = BoolType;
+        }
+    
     }
     public void visit(ExprListNode it){
         if (it.exprs != null) {
@@ -226,6 +251,8 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(FuncExprNode it){
         it.funcName.accept(this);
+        it.funcDef = GlobalScope.get_func(it.funcName.str);
+        it.type = it.funcDef.returnType.type;
         if (!(it.funcName instanceof AtomExprNode) && !(it.funcName instanceof MemberExprNode))
             throw new semanticError("Incorrect Function Name",it.pos);
         if (it.funcName instanceof  AtomExprNode) {
@@ -235,7 +262,6 @@ public class SemanticChecker implements ASTVisitor {
             it.funcName.type = new Type(typeName);
             FuncDefNode func = currentScope.getFunc(typeName);
             if (func == null) throw new semanticError("Undefined Function", it.pos);
-
         }
         if (it.lists != null) it.lists.accept(this);
     }
