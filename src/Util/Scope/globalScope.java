@@ -103,6 +103,10 @@ public class globalScope extends Scope {
         return types.get(name);
     }
 
+    public FuncDefNode get_func(String name){
+        return functionMembers.get(name);
+    }
+
     public boolean haveType(String name){
         return types.containsKey(name);
     }

@@ -25,14 +25,22 @@ public class SemanticChecker implements ASTVisitor {
         NullType = GlobalScope.getType("null", null);
     }
 
-    public void visit(RootNode it){}
+    public void visit(RootNode it){
+        FuncDefNode mainFunc = GlobalScope.get_func("main");
+        if (mainFunc == null || !mainFunc.returnType.type.typeName.equals("int") || mainFunc.params != null)
+            throw new syntaxError("Incorrect Main Function", it.pos);
+        for (var def : it.DefList) {
+            def.accept(this);
+        }
+    }
 
     public void visit(ClassDefNode it){}
     public void visit(ClassBuildNode it){}
     public void visit(FuncDefNode it){
         if (currentScope != GlobalScope && !(currentScope instanceof classScope))
             throw new syntaxError("Can't Define Function Here", it.pos);
-        it.accept(this);
+        //it.accept(this);
+
         currentScope = new funcScope(currentScope, it.returnType, it.params);
         if (currentScope.parentScope instanceof classScope &&
                 it.funcName.equals(((classScope) currentScope.parentScope).ClassType.typeName))
