@@ -1,8 +1,22 @@
 package Util;
 
-import java.util.HashMap;
+import AST.ClassDefNode;
 
 public class Type {
-    public boolean isInt = false, isBool = false;
-    public HashMap<String, Type> members = null;
+
+
+    public String typeName;
+    public boolean isClass = false;
+    public boolean isArray = false;
+    public int dim = 0;
+
+    public ClassDefNode classDecl = null;
+
+    public Type(){
+
+    }
+    public Type(String name){
+        this.typeName = name;
+    }
+
 }

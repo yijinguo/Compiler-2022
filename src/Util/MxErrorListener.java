@@ -1,6 +1,7 @@
 package Util;
 
-import Util.*;
+import Util.position;
+import Util.error.*;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
