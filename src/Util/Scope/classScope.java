@@ -8,6 +8,7 @@ import Util.*;
 public class classScope extends Scope{
     public Type ClassType;
 
+
     public classScope(Scope parentScope, Type classType) {
         super(parentScope);
         this.ClassType=classType;

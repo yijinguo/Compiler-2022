@@ -1,12 +1,17 @@
 /*
 Test Package: Sema_Local_Preview
 Test Target: Basic
-Author: 12' Chao Liao
-Time: 2019-11-11
-Verdict: Fail
-Comment: true cannot be assigned.
-Origin Package: Semantic Pretest
+Author: 15' Siqi Liu
+Time: 2019-10-20
+Verdict: Success
+Origin Package: Semantic Extended
 */
+void haha(){
+	int a;
+	return;
+}
+
 int main() {
-    true = false;
+	print("hehe\n");
+	return 0;
 }

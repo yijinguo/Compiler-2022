@@ -258,10 +258,23 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     }
     //@Override public ASTNode visitNewArrayUnit(MxParser.NewArrayUnitContext ctx)
     @Override public ASTNode visitPrimary(MxParser.PrimaryContext ctx) {
-        if (ctx.Identifier() == null)
-            return new AtomExprNode(new position(ctx), ctx.getText());
-        else
+        if (ctx.Identifier() != null) {
             return new VarExprNode(new position(ctx), ctx.getText());
+        } else {
+            AtomExprNode atom = new AtomExprNode(new position(ctx), ctx.getText());
+            if (ctx.IntConst() != null) {
+                atom.type = new Type("int");
+            } else if (ctx.StringConst() != null) {
+                atom.type = new Type("string");
+            } else if (ctx.True() != null || ctx.False() != null) {
+                atom.type = new Type("bool");
+            } else if (ctx.Null() != null) {
+                atom.type = new Type("null");
+            } else if (ctx.This() != null) {
+                atom.type = new Type("this");
+            }
+            return atom;
+        }
     }
 
     @Override public ASTNode visitExprList(MxParser.ExprListContext ctx) {

@@ -19,4 +19,8 @@ public class Type {
         this.typeName = name;
     }
 
+    public boolean equals(Type other){
+        return this.typeName.equals(other.typeName);
+    }
+
 }

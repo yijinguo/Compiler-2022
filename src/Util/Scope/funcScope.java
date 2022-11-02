@@ -10,6 +10,10 @@ public class funcScope extends Scope{
 
     public boolean isConstructor = false;
 
+    public funcScope(Scope parent){
+        super(parent);
+    }
+
     public funcScope(Scope parentScope, TypeNode returnType, ParameterListNode parameter) {
         super(parentScope);
         this.parameter = parameter;
@@ -20,4 +24,5 @@ public class funcScope extends Scope{
             }
         }
     }
+
 }
