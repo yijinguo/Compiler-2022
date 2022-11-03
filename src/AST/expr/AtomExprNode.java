@@ -5,7 +5,6 @@ import Util.position;
 
 public class AtomExprNode extends ExprNode {
 
-
     public AtomExprNode(position pos){
         super(pos);
     }

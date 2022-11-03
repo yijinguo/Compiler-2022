@@ -2,7 +2,7 @@ package AST;
 
 import Util.*;
 
-public class TypeNode extends  ASTNode{
+public class TypeNode extends ASTNode{
 
     public Type type = new Type();
 

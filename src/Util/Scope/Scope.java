@@ -52,6 +52,14 @@ public class Scope {
         return null;
     }
 
+    public boolean have_var(String name){
+        return variableMembers.containsKey(name);
+    }
+
+    public boolean have_func(String name){
+        return functionMembers.containsKey(name);
+    }
+
     public Scope getCurrentScope(){
         return this;
     }

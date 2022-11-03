@@ -71,11 +71,15 @@ public class SemanticChecker implements ASTVisitor {
         it.units.forEach(x-> x.accept(this));
     }
     public void visit(VarDefUnitNode it){
-        it.type.accept(this); //why?
+        it.type.accept(this);
         if (it.init != null) {
             it.init.accept(this);
         }
-        if (currentScope.getVar(it.varName) != null)
+        if (it.type.type.isArray) {
+            if (it.init == null || it.type.type.dim != it.init.type.dim)
+                throw new semanticError("Unmatched Dimension", it.pos);
+        }
+        if (currentScope.have_var(it.varName))
             throw new semanticError("Redefined of variable", it.pos);
         currentScope.add_var(it);
     }
@@ -124,9 +128,9 @@ public class SemanticChecker implements ASTVisitor {
             throw new semanticError("Invalid Condition", it.pos);
         currentScope = new loopScope(currentScope);
         //没有考虑if和else的大括号省略问题
-        if (it.thenStmts != null)
+        if (it.thenStmts.size() != 0)
             it.thenStmts.forEach(x->x.accept(this));
-        if (it.elseStmts != null)
+        if (it.elseStmts.size() != 0)
             it.elseStmts.forEach(x->x.accept(this));
         currentScope = currentScope.parentScope;
     }
@@ -142,9 +146,9 @@ public class SemanticChecker implements ASTVisitor {
             throw new semanticError("Unmatched ReturnType", it.pos);
     }
     public void visit(SuiteNode it){
-        //currentScope = new Scope(currentScope);
+        currentScope = new Scope(currentScope);
         it.stmts.forEach(x->x.accept(this));
-        //currentScope = currentScope.parentScope;
+        currentScope = currentScope.parentScope;
     }
     public void visit(WhileStmtNode it){
         if (it.condition == null) throw new syntaxError("Lack Condition", it.pos);
@@ -162,6 +166,7 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(ArrayExprNode it){
         it.arrayName.accept(this);
         if (it.index != null) it.index.accept(this);
+        /*
         VarDefUnitNode var = new VarDefUnitNode(it.pos);
         Scope s = new Scope(currentScope);
         while (s != GlobalScope) {
@@ -171,6 +176,8 @@ public class SemanticChecker implements ASTVisitor {
             }
             s = s.parentScope;
         }
+         */
+        VarDefUnitNode var = currentScope.getVar(it.arrayName.str);
         if (var.type.type.dim != it.arrayName.type.dim + 1) throw new syntaxError("Unmatched ArrayDim", it.pos);
     }
     public void visit(AssignExprNode it){
@@ -178,33 +185,65 @@ public class SemanticChecker implements ASTVisitor {
         it.rhs.accept(this);
         if(!it.lhs.isAssignable())
             throw new syntaxError("It is Not Assignable", it.pos);
-        if (it.lhs.type.equals(it.rhs.type))
+        if (!it.lhs.type.equals(it.rhs.type))
             throw new syntaxError("Unmatched AssignType", it.pos);
     }
-    public void visit(AtomExprNode it){}
+    public void visit(AtomExprNode it){
+        if (it.type == null) {
+            VarDefUnitNode var = currentScope.getVar(it.str);
+            FuncDefNode func = currentScope.getFunc(it.str);
+            ClassDefNode classDef = GlobalScope.getClass(it.str, it.pos);
+            if (var == null && func == null && classDef == null)
+                throw new semanticError("Undefined AtomExpr", it.pos);
+            if (var != null) {
+                it.type = var.type.type;
+            } else if (func != null) {
+               it.funcDef = func;
+            } else {
+                it.type = new Type();
+                it.type.isClass = true;
+            }
+        }
+    }
     public void visit(BinaryExprNode it){
         it.lhs.accept(this);
         it.rhs.accept(this);
         Type lType = it.lhs.type;
         Type rType = it.rhs.type;
+        if (lType.isArray || rType.isArray) {
+            if (!it.op.equals("==") && !it.op.equals("!="))
+                throw new syntaxError("Invalid BinaryExpr Type", it.pos);
+            if (lType.isArray && rType != NullType || rType.isArray && lType != NullType)
+                throw new syntaxError("Invalid Type", it.pos);
+            it.type = BoolType;
+            return;
+        }
         if (it.op.equals("==") || it.op.equals("!=")) {
-            if (lType.isArray) {
-                if (!rType.equals(NullType)) throw new syntaxError("Invalid Type", it.pos);
-            } else {
-                if (!lType.equals(rType)) throw new semanticError("Unmatched Type", it.pos);
-                if (!lType.equals(BoolType) && !lType.equals(IntType) && lType.equals(StringType)){
-                    if (GlobalScope.getClass(it.lhs.str, it.pos) == null)
-                        throw new syntaxError("Invalid Type", it.pos);
-                }
+            if (!lType.equals(rType)) throw new semanticError("Unmatched Type", it.pos);
+            if (!lType.equals(BoolType) && !lType.equals(IntType) && !lType.equals(StringType)) {
+                if (GlobalScope.getClass(it.lhs.str, it.pos) == null)
+                    throw new syntaxError("Invalid Type", it.pos);
             }
+            it.type = BoolType;
+        }  else if (it.op.equals("<") || it.op.equals("<=") || it.op.equals(">") || it.op.equals(">=")) {
+            if (!lType.equals(rType)) throw new semanticError("Unmatched Type", it.pos);
+            if (!lType.equals(BoolType) && !lType.equals(IntType) && !lType.equals(StringType))
+                throw new syntaxError("Invalid Type", it.pos);
+            it.type = BoolType;
         } else if (it.op.equals("+")) {
             if (!lType.equals(rType)) throw new semanticError("Unmatched Type", it.pos);
-            if (!lType.equals(BoolType) && !lType.equals(IntType) && lType.equals(StringType))
+            if (!lType.equals(BoolType) && !lType.equals(IntType) && !lType.equals(StringType))
                 throw new syntaxError("Invalid Type", it.pos);
-        } else if (it.op.equals("<") || it.op.equals("<=") || it.op.equals(">") || it.op.equals(">=")) {
-            
+            if (lType.equals(IntType)) it.type = IntType;
+            else if (lType.equals(BoolType)) it.type = IntType;
+            else if (lType.equals(StringType)) it.type = StringType;
+        } else {
+            if (!lType.equals(rType)) throw new semanticError("Unmatched Type", it.pos);
+            if (!lType.equals(BoolType) && !lType.equals(IntType))
+                throw new syntaxError("Invalid Type", it.pos);
+            if (it.op.equals("||") || it.op.equals("&&")) it.type = BoolType;
+            else it.type = lType;
         }
-
     }
     public void visit(ExprListNode it){
         it.exprs.forEach(x->x.accept(this));
@@ -241,7 +280,14 @@ public class SemanticChecker implements ASTVisitor {
         ClassDefNode classNode = GlobalScope.getClass(it.name.str, it.pos);
         if (!classNode.have_var(it.name.str) && !classNode.have_func(it.name.str)) throw new syntaxError("Undefined Class Member", it.pos);
     }
-    public void visit(NewExprNode it){}
+    public void visit(NewExprNode it){
+        if (!GlobalScope.haveType(it.typeName))
+            throw new semanticError("Undefined Type", it.pos);
+        for (int i = it.dim - 1; i > 0; --i) {
+            if (it.sizeList.get(i) != null && it.sizeList.get(i - 1) == null)
+                throw new syntaxError("Invalid New Expression", it.pos);
+        }
+    }
     public void visit(PreAddExprNode it){
         it.expr.accept(this);
         if (it.expr.str == null) throw new syntaxError("Not a variable", it.pos);
@@ -254,6 +300,5 @@ public class SemanticChecker implements ASTVisitor {
         if (it.expr.type.equals(IntType)) throw new semanticError("Not a Variable", it.pos);
         if (currentScope.getVar(it.expr.str) == null) throw new syntaxError("Undefined Variable", it.pos);
     }
-
  
 }

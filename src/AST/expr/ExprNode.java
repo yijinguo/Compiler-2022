@@ -16,5 +16,12 @@ public abstract class ExprNode extends ASTNode {
         super(pos);
     }
 
+    public ExprNode(ExprNode other){
+        super(other.pos);
+        this.str = other.str;
+        this.type = other.type;
+        this.funcDef = other.funcDef;
+    }
+
     public abstract boolean isAssignable();
 }

@@ -89,6 +89,8 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override public ASTNode visitVarDef(MxParser.VarDefContext ctx) {
         VarDefNode varDef = new VarDefNode(new position(ctx));
         TypeNode type = (TypeNode) visit(ctx.type());
+        type.type.dim = ctx.type().LBracket().size();
+        if (type.type.dim != 0) type.type.isArray = true;
         for (var x : ctx.varDefUnit()) {
             VarDefUnitNode it = new VarDefUnitNode(new position(x), type, x.Identifier().getText());
             if (x.expr() != null) it.init = (ExprNode) visit(x.expr());
