@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 public class globalScope extends Scope {
     public HashMap<String, Type> types = new HashMap<>();
+    public HashMap<String, ClassDefNode> classList = new HashMap<>();
 
     public void initialize(){
 
@@ -93,14 +94,27 @@ public class globalScope extends Scope {
         super(parentScope);
     }
 
+    /*
     public void add_type(Type type, position pos){
         if (types.containsKey(type.typeName)) throw new semanticError("Class Name Exists", pos);
         types.put(type.typeName, type);
     }
+    */
+
+    public void add_class(String name, ClassDefNode newClass, position pos){
+        if (classList.containsKey(name)) throw new semanticError("Class Name Exists", pos);
+        types.put(newClass.name, new Type(newClass.name));
+        classList.put(name, newClass);
+    }
 
     public Type getType(String name, position pos){
-        if (!types.containsKey(name)) throw new semanticError("Invalid Type", pos);
+        if (!types.containsKey(name)) return null;
         return types.get(name);
+    }
+
+    public ClassDefNode getClass(String name, position pos){
+        if (!classList.containsKey(name)) return null;
+        return classList.get(name);
     }
 
     public boolean haveType(String name){

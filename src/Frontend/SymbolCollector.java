@@ -25,9 +25,15 @@ public class SymbolCollector implements ASTVisitor{
 
     public void visit(ClassDefNode it) {
         if (GlobalScope.haveType(it.name)) throw new syntaxError("Class name exists", it.pos);
-        Type newType = new Type(it.name);
-        newType.classDecl = it;
-        GlobalScope.add_type(newType, it.pos);
+        //Type newType = new Type(it.name);
+        //newType.classDecl = it;
+        //GlobalScope.add_type(newType, it.pos);
+        GlobalScope.add_class(it.name, it, it.pos);
+        /*
+        for (VarDefNode x : it.varList)
+            for (VarDefUnitNode y : x.units) GlobalScope.add_var(y);
+        for (FuncDefNode x : it.funcList)
+            GlobalScope.add_func(x.funcName, x);*/
         classVisiting = it;
         if (classVisiting.classBuilder == null) throw new syntaxError("Lack Constructor", it.pos);
         //if (classVisiting.constructor.size() > 1) throw new syntaxError("Multiple Constructor Definitions", it.pos);
@@ -39,13 +45,14 @@ public class SymbolCollector implements ASTVisitor{
     }
     public void visit(ClassBuildNode it){ }
     public void visit(FuncDefNode it){
-        if (GlobalScope.haveType(it.funcName)) throw new syntaxError("ClassName Exits", it.pos);
         if (!GlobalScope.haveType(it.returnType.type.typeName)) throw new syntaxError("Invalid Type", it.pos);
         if (it.funcName.equals("main")) {
             if (it.params != null || !it.returnType.type.typeName.equals("int"))
                 throw new syntaxError("Invalid Main Definition", it.pos);
         }
-        if (classVisiting != null) {
+        if (classVisiting == null) {
+            if (GlobalScope.haveType(it.funcName)) throw new syntaxError("ClassName Exits", it.pos);
+        } else {
             if (classVisiting.name.equals(it.funcName)) throw new syntaxError("Constructor Exists", it.pos);
             for (FuncDefNode func : classVisiting.funcList)
                 if (func.funcName.equals(it.funcName)) throw new syntaxError("Renaming Class Member", it.pos);
@@ -59,13 +66,13 @@ public class SymbolCollector implements ASTVisitor{
     public void visit(ParameterListNode it){ }
     public void visit(VarDefNode it){
         //TypeNode varType = new TypeNode(it.pos,it.getTypeName());
-        if (!GlobalScope.haveType(it.getTypeName())) throw new syntaxError("Invalid Type", it.pos);
-        Type type = GlobalScope.getType(it.getTypeName(), it.pos);
+        //Type type = GlobalScope.getType(it.getTypeName(), it.pos);
         if (classVisiting != null) {
             for (VarDefUnitNode x : it.units)
                 if (classVisiting.have_var(x.varName)) throw new syntaxError("Renaming Class Member", it.pos);
             classVisiting.varList.add(it);
         }
+        if (!GlobalScope.haveType(it.getTypeName())) throw new syntaxError("Invalid Type", it.pos);
     }
     public void visit(VarDefUnitNode it){ }
     public void visit(TypeNode it){ }
