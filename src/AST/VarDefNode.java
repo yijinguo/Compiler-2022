@@ -14,7 +14,7 @@ public class VarDefNode extends StmtNode {
     }
 
     public String getTypeName(){
-        if (units != null) return units.get(0).varName;
+        if (units != null) return units.get(0).type.type.typeName;
         else return null;
     }
 

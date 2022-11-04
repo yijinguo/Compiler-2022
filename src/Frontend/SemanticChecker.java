@@ -120,9 +120,10 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(ForStmtNode it){
         if (it.varDef != null) it.varDef.accept(this);
         else if (it.init != null) it.init.accept(this);
-        if (it.condition == null) throw new syntaxError("Lack Condition", it.pos);
-        it.condition.accept(this);
-        if (!it.condition.type.equals(BoolType)) throw new syntaxError("Invalid Condition", it.pos);
+        if (it.condition != null) {
+            it.condition.accept(this);
+            if (!it.condition.type.equals(BoolType)) throw new syntaxError("Invalid Condition", it.pos);
+        }
         if (it.step != null) it.step.accept(this);
         currentScope = new loopScope(currentScope);
         it.stmts.forEach(x->x.accept(this));
@@ -276,7 +277,6 @@ public class SemanticChecker implements ASTVisitor {
          */
         FuncDefNode t = new FuncDefNode(it.pos);
         if (it.funcName instanceof MemberExprNode){
-            //todo
             t = it.funcName.funcDef;
         } else {
             t = currentScope.getFunc(it.funcName.str);
@@ -297,9 +297,6 @@ public class SemanticChecker implements ASTVisitor {
                     throw paramsError;
             }
         }
-        if (t.returnType == null) {
-            int debug = 1;
-        }
         it.type = t.returnType.type;
     }
     public void visit(LambdaExprNode it){}
@@ -313,7 +310,7 @@ public class SemanticChecker implements ASTVisitor {
         }
         if (it.name.str != null) {
             ClassDefNode classNode = GlobalScope.getClass(it.name.str, it.pos);
-            if (!classNode.have_var(it.name.str) && !classNode.have_func(it.name.str))
+            if (!classNode.have_var(it.member) && !classNode.have_func(it.member))
                 throw new syntaxError("Undefined Class Member", it.pos);
         }
         it.str = it.member;
@@ -325,28 +322,27 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(NewExprNode it){
         if (!GlobalScope.haveType(it.typeName))
             throw new semanticError("Undefined Type", it.pos);
-        for (int i = it.dim - 1; i > 0; --i) {
+        for (int i = it.sizeList.size() - 1; i > 0; --i) {
             if (it.sizeList.get(i) != null && it.sizeList.get(i - 1) == null)
                 throw new syntaxError("Invalid New Expression", it.pos);
         }
+        it.type = GlobalScope.getType(it.typeName, null);
+        it.type.dim = it.dim;
     }
     public void visit(PreAddExprNode it){
         it.expr.accept(this);
         if (it.expr.str == null) throw new syntaxError("Not a variable", it.pos);
-        if (it.expr.type.equals(IntType)) throw new semanticError("Not a Variable", it.pos);
+        if (!it.expr.type.equals(IntType)) throw new semanticError("Not a Variable", it.pos);
         if (currentScope.getVar(it.expr.str) == null) throw new syntaxError("Undefined Variable", it.pos);
+        it.type = IntType;
     }
     public void visit(UnaryExprNode it){
         it.expr.accept(this);
-        if (it.expr.str == null) throw new syntaxError("Not a variable", it.pos);
-        if (it.expr.type.equals(IntType)) throw new semanticError("Not a Variable", it.pos);
-        VarDefUnitNode var = currentScope.getVar(it.expr.str);
-        FuncDefNode func = currentScope.getFunc(it.expr.str);
-        if (var == null && func == null) throw new syntaxError("Undefined Name", it.pos);
-        if (var != null)
-            it.type = var.type.type;
-        else
-            it.type = func.returnType.type;
+        //maybe need some change
+        if (!it.expr.type.equals(IntType) && !it.expr.type.equals(BoolType))
+            throw new semanticError("Invalid Variable Type", it.pos);
+
+        it.type = it.expr.type;
     }
  
 }

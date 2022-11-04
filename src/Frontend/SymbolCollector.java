@@ -35,10 +35,13 @@ public class SymbolCollector implements ASTVisitor{
         for (FuncDefNode x : it.funcList)
             GlobalScope.add_func(x.funcName, x);*/
         classVisiting = it;
-        if (classVisiting.classBuilder == null) throw new syntaxError("Lack Constructor", it.pos);
+        //if (classVisiting.classBuilder == null)
+        //    throw new syntaxError("Lack Constructor", it.pos);
         //if (classVisiting.constructor.size() > 1) throw new syntaxError("Multiple Constructor Definitions", it.pos);
         //visit(classVisiting.constructor.get(0));
         visit(classVisiting.classBuilder);
+        //classVisiting.varList.forEach(x->x.accept(this));
+        //classVisiting.funcList.forEach(x->x.accept(this));
         for (VarDefNode vars : classVisiting.varList) visit(vars);
         for (FuncDefNode functions : classVisiting.funcList) visit(functions);
         classVisiting = null;
@@ -54,8 +57,13 @@ public class SymbolCollector implements ASTVisitor{
             if (GlobalScope.haveType(it.funcName)) throw new syntaxError("ClassName Exits", it.pos);
         } else {
             if (classVisiting.name.equals(it.funcName)) throw new syntaxError("Constructor Exists", it.pos);
-            for (FuncDefNode func : classVisiting.funcList)
-                if (func.funcName.equals(it.funcName)) throw new syntaxError("Renaming Class Member", it.pos);
+            boolean have = false;
+            for (FuncDefNode func : classVisiting.funcList) {
+                if (func.funcName.equals(it.funcName)) {
+                    if (!have) have = true;
+                    else throw new syntaxError("Renaming Class Member", it.pos);
+                }
+            }
         }
         if (classVisiting != null) {
             classVisiting.funcList.add(it);
@@ -72,7 +80,8 @@ public class SymbolCollector implements ASTVisitor{
                 if (classVisiting.have_var(x.varName)) throw new syntaxError("Renaming Class Member", it.pos);
             classVisiting.varList.add(it);
         }
-        if (!GlobalScope.haveType(it.getTypeName())) throw new syntaxError("Invalid Type", it.pos);
+        if (!GlobalScope.haveType(it.getTypeName()))
+            throw new syntaxError("Invalid Type", it.pos);
     }
     public void visit(VarDefUnitNode it){ }
     public void visit(TypeNode it){ }

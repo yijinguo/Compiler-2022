@@ -98,13 +98,6 @@ public class globalScope extends Scope {
         super(parentScope);
     }
 
-    /*
-    public void add_type(Type type, position pos){
-        if (types.containsKey(type.typeName)) throw new semanticError("Class Name Exists", pos);
-        types.put(type.typeName, type);
-    }
-    */
-
     public void add_class(String name, ClassDefNode newClass, position pos){
         if (classList.containsKey(name)) throw new semanticError("Class Name Exists", pos);
         types.put(newClass.name, new Type(newClass.name));

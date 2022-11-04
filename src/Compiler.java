@@ -17,13 +17,13 @@ import grammar.*;
 public class Compiler {
 
     public static void main(String[] args) throws Exception{
-        String name="src/testcase.mx";
-        InputStream input=new FileInputStream(name);
-        //InputStream input = System.in;
+        //String name="src/testcase.mx";
+        //InputStream input=new FileInputStream(name);
+        InputStream input = System.in;
         try {
             RootNode root;
             globalScope GlobalScope=new globalScope(null);
-            GlobalScope.initialize();
+            GlobalScope. initialize();
 
             MxLexer lexer=new MxLexer(CharStreams.fromStream(input));
             lexer.removeErrorListeners();
