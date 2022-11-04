@@ -30,6 +30,10 @@ public class ClassDefNode extends ASTNode{
         return funcMem.get(name);
     }
 
+    public VarDefUnitNode get_var(String name) {
+        return varMem.get(name);
+    }
+
     public ClassDefNode(position pos, String name){
         super(pos);
         this.name = name;

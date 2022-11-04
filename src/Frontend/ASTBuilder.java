@@ -13,6 +13,7 @@ import grammar.*;
 public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
     public globalScope GlobalScope;
+    private ClassDefNode classDef;
 
     public ASTBuilder(globalScope Global){
         this.GlobalScope = Global;
@@ -71,9 +72,13 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
                 constructor = true;
                 classDef.classBuilder = (ClassBuildNode) visit(x);
             } else if (x instanceof MxParser.FuncDefContext) {
-                classDef.funcList.add((FuncDefNode) visit(x));
+                FuncDefNode newFunc = (FuncDefNode) visit(x);
+                classDef.funcList.add(newFunc);
+                classDef.funcMem.put(newFunc.funcName, newFunc);
             } else if (x instanceof MxParser.VarDefContext) {
-                classDef.varList.add((VarDefNode) visit(x));
+                VarDefNode newVar = (VarDefNode) visit(x);
+                classDef.varList.add(newVar);
+                for (VarDefUnitNode y : newVar.units) classDef.varMem.put(y.varName, y);
             }
         }
         return classDef;

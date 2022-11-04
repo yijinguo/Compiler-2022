@@ -15,36 +15,37 @@ public class SymbolCollector implements ASTVisitor{
 
     private ClassDefNode classVisiting = null;
 
+    private boolean catchClassType = false;
+
     public SymbolCollector(globalScope GlobalScope){
         this.GlobalScope = GlobalScope;
     }
 
     public void visit(RootNode it){
+        for (int i = 0; i < it.DefList.size(); ++i) {
+            ASTNode node = it.DefList.get(i);
+            if (node instanceof ClassDefNode) {
+                node.accept(this);
+            }
+        }
+        catchClassType = true;
         it.DefList.forEach(def -> def.accept(this));
     }
 
     public void visit(ClassDefNode it) {
-        if (GlobalScope.haveType(it.name)) throw new syntaxError("Class name exists", it.pos);
-        //Type newType = new Type(it.name);
-        //newType.classDecl = it;
-        //GlobalScope.add_type(newType, it.pos);
-        GlobalScope.add_class(it.name, it, it.pos);
-        /*
-        for (VarDefNode x : it.varList)
-            for (VarDefUnitNode y : x.units) GlobalScope.add_var(y);
-        for (FuncDefNode x : it.funcList)
-            GlobalScope.add_func(x.funcName, x);*/
-        classVisiting = it;
-        //if (classVisiting.classBuilder == null)
-        //    throw new syntaxError("Lack Constructor", it.pos);
-        //if (classVisiting.constructor.size() > 1) throw new syntaxError("Multiple Constructor Definitions", it.pos);
-        //visit(classVisiting.constructor.get(0));
-        visit(classVisiting.classBuilder);
-        //classVisiting.varList.forEach(x->x.accept(this));
-        //classVisiting.funcList.forEach(x->x.accept(this));
-        for (VarDefNode vars : classVisiting.varList) visit(vars);
-        for (FuncDefNode functions : classVisiting.funcList) visit(functions);
-        classVisiting = null;
+        if (!catchClassType) {
+            if (GlobalScope.haveType(it.name)) throw new syntaxError("Class name exists", it.pos);
+            GlobalScope.add_class(it.name, it, it.pos);
+        } else {
+            classVisiting = it;
+            if (classVisiting.classBuilder != null)
+                classVisiting.classBuilder.accept(this);
+            for (int i = 0; i < classVisiting.varList.size(); ++i)
+                classVisiting.varList.get(i).accept(this);
+            for (int i = 0; i < classVisiting.funcList.size(); ++i)
+                classVisiting.funcList.get(i).accept(this);
+            classVisiting = null;
+        }
     }
     public void visit(ClassBuildNode it){ }
     public void visit(FuncDefNode it){
@@ -65,20 +66,19 @@ public class SymbolCollector implements ASTVisitor{
                 }
             }
         }
-        if (classVisiting != null) {
-            classVisiting.funcList.add(it);
-        } else {
+        if (classVisiting == null)
             GlobalScope.add_func(it.funcName, it);
-        }
     }
     public void visit(ParameterListNode it){ }
     public void visit(VarDefNode it){
-        //TypeNode varType = new TypeNode(it.pos,it.getTypeName());
-        //Type type = GlobalScope.getType(it.getTypeName(), it.pos);
         if (classVisiting != null) {
-            for (VarDefUnitNode x : it.units)
-                if (classVisiting.have_var(x.varName)) throw new syntaxError("Renaming Class Member", it.pos);
-            classVisiting.varList.add(it);
+            boolean have = false;
+            for (VarDefUnitNode x : it.units) {
+                if (classVisiting.have_var(x.varName)) {
+                    if (!have) have = true;
+                    else throw new syntaxError("Renaming Class Member", it.pos);
+                }
+            }
         }
         if (!GlobalScope.haveType(it.getTypeName()))
             throw new syntaxError("Invalid Type", it.pos);
