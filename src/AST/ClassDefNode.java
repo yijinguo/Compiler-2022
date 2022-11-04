@@ -26,12 +26,14 @@ public class ClassDefNode extends ASTNode{
         return funcMem.containsKey(name);
     }
 
+    public FuncDefNode get_func(String name){
+        return funcMem.get(name);
+    }
+
     public ClassDefNode(position pos, String name){
         super(pos);
         this.name = name;
     }
-
-
 
     @Override
     public void accept(ASTVisitor visitor){

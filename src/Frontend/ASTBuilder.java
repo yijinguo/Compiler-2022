@@ -164,7 +164,8 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             forStmt.varDef = (VarDefNode) visit(ctx.forInit().varDef());
         else
             forStmt.init = ((ExprStmtNode) visit(ctx.forInit().exprStmt())).exprNode;
-        forStmt.condition = ((ExprStmtNode) visit(ctx.forInit().exprStmt())).exprNode;
+        forStmt.condition = ((ExprStmtNode) visit(ctx.exprStmt())).exprNode;
+        //forStmt.condition = ((ExprStmtNode) visit(ctx.forInit().exprStmt())).exprNode;
         if (ctx.expr() != null)
             forStmt.step = (ExprNode) visit(ctx.expr());
         if (ctx.statement().suite() != null)

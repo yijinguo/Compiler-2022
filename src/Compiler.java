@@ -17,9 +17,9 @@ import grammar.*;
 public class Compiler {
 
     public static void main(String[] args) throws Exception{
-        //String name="src/testcase.mx";
-        //InputStream input=new FileInputStream(name);
-        InputStream input = System.in;
+        String name="src/testcase.mx";
+        InputStream input=new FileInputStream(name);
+        //InputStream input = System.in;
         try {
             RootNode root;
             globalScope GlobalScope=new globalScope(null);
@@ -38,7 +38,7 @@ public class Compiler {
             root=(RootNode) astBuilder.visit(parseTreeRoot);
             SymbolCollector symbolCollector=new SymbolCollector(GlobalScope);
             symbolCollector.visit(root);
-            int debug = 1;
+
             SemanticChecker semanticChecker=new SemanticChecker(GlobalScope);
             semanticChecker.visit(root);
 

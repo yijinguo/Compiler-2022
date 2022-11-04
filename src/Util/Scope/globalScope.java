@@ -45,10 +45,14 @@ public class globalScope extends Scope {
         classStringDeclNode.funcList.add(SubString);
         classStringDeclNode.funcList.add(ParseInt);
         classStringDeclNode.funcList.add(Ord);
+        classStringDeclNode.funcMem.put("length", Length);
+        classStringDeclNode.funcMem.put("subString", SubString);
+        classStringDeclNode.funcMem.put("parseInt", ParseInt);
+        classStringDeclNode.funcMem.put("ord", Ord);
 
         classString.classDecl = classStringDeclNode;
         types.put("string", classString);
-
+        classList.put("string", classStringDeclNode);
 
         //数组内建函数
         ParameterListNode ArrayInitList = new ParameterListNode(null);

@@ -58,10 +58,17 @@ public class SemanticChecker implements ASTVisitor {
         ((funcScope) currentScope).returnType = it.returnType;
         if (it.params != null)
             it.params.accept(this);
-        it.stmts.forEach(x->x.accept(this));
+        boolean flag = false;
+        for (int i = 0; i < it.stmts.size(); ++i) {
+            (it.stmts.get(i)).accept(this);
+            if (it.stmts.get(i) instanceof ReturnStmtNode) flag = true;
+        }
+        //it.stmts.forEach(x->x.accept(this));
         //关于无返回值的问题
-        if (!it.returnType.type.equals(VoidType) && !it.funcName.equals("main"))
-            throw new semanticError("Lack Return", it.pos);
+        if (!flag) {
+            if (!it.returnType.type.equals(VoidType) && !it.funcName.equals("main"))
+                throw new semanticError("Lack Return", it.pos);
+        }
         currentScope = currentScope.parentScope;
     }
     public void visit(ParameterListNode it){
@@ -112,7 +119,7 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(ForStmtNode it){
         if (it.varDef != null) it.varDef.accept(this);
-        else it.init.accept(this);
+        else if (it.init != null) it.init.accept(this);
         if (it.condition == null) throw new syntaxError("Lack Condition", it.pos);
         it.condition.accept(this);
         if (!it.condition.type.equals(BoolType)) throw new syntaxError("Invalid Condition", it.pos);
@@ -140,9 +147,14 @@ public class SemanticChecker implements ASTVisitor {
             else throw new syntaxError("Lack Return", it.pos);
         }
         it.expr.accept(this);
-        if (!(currentScope instanceof funcScope))
+        Scope s = new Scope(currentScope);
+        while (s != GlobalScope) {
+            s = s.parentScope;
+            if (s instanceof funcScope) break;
+        }
+        if (!(s instanceof funcScope))
             throw new syntaxError("Invalid Return", it.pos);
-        if (!it.expr.type.equals(((funcScope) currentScope).returnType.type))
+        if (!it.expr.type.equals(((funcScope) s).returnType.type))
             throw new semanticError("Unmatched ReturnType", it.pos);
     }
     public void visit(SuiteNode it){
@@ -198,7 +210,8 @@ public class SemanticChecker implements ASTVisitor {
             if (var != null) {
                 it.type = var.type.type;
             } else if (func != null) {
-               it.funcDef = func;
+                it.type = func.returnType.type;
+                it.funcDef = func;
             } else {
                 it.type = new Type();
                 it.type.isClass = true;
@@ -250,7 +263,9 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(FuncExprNode it){
         it.funcName.accept(this);
+        it.str = it.funcName.str;
         if (it.lists != null) it.lists.accept(this);
+        /*
         FuncDefNode t = null;
         Scope s = new Scope(currentScope);
         while (!(s instanceof globalScope)) {
@@ -258,9 +273,20 @@ public class SemanticChecker implements ASTVisitor {
             t = s.getFunc(it.funcName.str);
             if (t != null) break;
         }
-        if (t == null) throw new syntaxError("Undefined Function", it.pos);
+         */
+        FuncDefNode t = new FuncDefNode(it.pos);
+        if (it.funcName instanceof MemberExprNode){
+            //todo
+            t = it.funcName.funcDef;
+        } else {
+            t = currentScope.getFunc(it.funcName.str);
+            if (t == null)
+                throw new syntaxError("Undefined Function", it.pos);
+        }
         syntaxError paramsError = new syntaxError("Unmatched ParameterList", it.pos);
-        if (it.lists == null && t.params != null) throw paramsError;
+        if (it.lists == null && t.params != null) {
+            throw paramsError;
+        }
         if (it.lists != null) {
             if (t.params == null || t.params.varList.size() != it.lists.exprs.size())
                 throw paramsError;
@@ -271,14 +297,30 @@ public class SemanticChecker implements ASTVisitor {
                     throw paramsError;
             }
         }
+        if (t.returnType == null) {
+            int debug = 1;
+        }
+        it.type = t.returnType.type;
     }
     public void visit(LambdaExprNode it){}
     public void visit(MemberExprNode it){
         it.name.accept(this);
-        if (GlobalScope.getClass(it.name.str, it.pos) == null)
-            throw new syntaxError("Undefined Class", it.pos);
-        ClassDefNode classNode = GlobalScope.getClass(it.name.str, it.pos);
-        if (!classNode.have_var(it.name.str) && !classNode.have_func(it.name.str)) throw new syntaxError("Undefined Class Member", it.pos);
+        if (it.name.str != null) {
+            if (it.name.type.equals(StringType))
+                it.name.str = "string";
+            else if (GlobalScope.getClass(it.name.str, it.pos) == null)
+                throw new syntaxError("Undefined Class", it.pos);
+        }
+        if (it.name.str != null) {
+            ClassDefNode classNode = GlobalScope.getClass(it.name.str, it.pos);
+            if (!classNode.have_var(it.name.str) && !classNode.have_func(it.name.str))
+                throw new syntaxError("Undefined Class Member", it.pos);
+        }
+        it.str = it.member;
+        it.type = new Type();
+        it.type.isClass = true;
+        ClassDefNode classDef = GlobalScope.getClass(it.name.type.typeName,it.pos);
+        it.funcDef = classDef.get_func(it.str);
     }
     public void visit(NewExprNode it){
         if (!GlobalScope.haveType(it.typeName))
@@ -298,7 +340,13 @@ public class SemanticChecker implements ASTVisitor {
         it.expr.accept(this);
         if (it.expr.str == null) throw new syntaxError("Not a variable", it.pos);
         if (it.expr.type.equals(IntType)) throw new semanticError("Not a Variable", it.pos);
-        if (currentScope.getVar(it.expr.str) == null) throw new syntaxError("Undefined Variable", it.pos);
+        VarDefUnitNode var = currentScope.getVar(it.expr.str);
+        FuncDefNode func = currentScope.getFunc(it.expr.str);
+        if (var == null && func == null) throw new syntaxError("Undefined Name", it.pos);
+        if (var != null)
+            it.type = var.type.type;
+        else
+            it.type = func.returnType.type;
     }
  
 }
