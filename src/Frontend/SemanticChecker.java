@@ -63,18 +63,19 @@ public class SemanticChecker implements ASTVisitor {
             (it.stmts.get(i)).accept(this);
             if (it.stmts.get(i) instanceof ReturnStmtNode) flag = true;
         }
-        if (!currentScope.hasReturn) throw new semanticError("Lack Return", it.pos);
         //关于无返回值的问题
+        if (!it.funcName.equals("main") && !it.returnType.type.equals(VoidType) && !currentScope.hasReturn)
+            throw new semanticError("Lack Return", it.pos);
+
         /*
         if (!flag) {
             if (!it.returnType.type.equals(VoidType) && !it.funcName.equals("main"))
                 throw new semanticError("Lack Return", it.pos);
-        }
+        }*/
         currentScope = currentScope.parentScope;
         if (currentScope instanceof classScope) {
             ((classScope) currentScope).add_func(it.funcName, it);
         }
-         */
     }
     public void visit(ParameterListNode it){
         it.varList.forEach(x->x.accept(this));
