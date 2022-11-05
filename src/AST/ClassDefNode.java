@@ -22,6 +22,19 @@ public class ClassDefNode extends ASTNode{
         return varMem.containsKey(name);
     }
 
+    public int count(String name){
+        int num = 0;
+        for (VarDefNode x : varList) {
+            for (VarDefUnitNode y : x.units) {
+                if (y.varName.equals(name)) num++;
+            }
+        }
+        for (FuncDefNode x : funcList) {
+            if (x.funcName.equals(name)) num++;
+        }
+        return num;
+    }
+
     public boolean have_func(String name){
         return funcMem.containsKey(name);
     }

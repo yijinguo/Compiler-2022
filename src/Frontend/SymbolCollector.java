@@ -74,10 +74,14 @@ public class SymbolCollector implements ASTVisitor{
         if (classVisiting != null) {
             boolean have = false;
             for (VarDefUnitNode x : it.units) {
+                if (classVisiting.count(x.varName) != 1) {
+                    throw new syntaxError("Renaming Class Member", it.pos);
+                }
+                /*
                 if (classVisiting.have_var(x.varName)) {
                     if (!have) have = true;
                     else throw new syntaxError("Renaming Class Member", it.pos);
-                }
+                }*/
             }
         }
         if (!GlobalScope.haveType(it.getTypeName()))
