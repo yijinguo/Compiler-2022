@@ -113,10 +113,10 @@ public class SemanticChecker implements ASTVisitor {
         if (! (currentScope instanceof loopScope))
             throw new syntaxError("Break Out of Loop", it.pos);
     }
-    public void visit(ExprStmtNode it){
+    public void visit(ExprStmtNode it) {
         if (it.exprNode != null) it.exprNode.accept(this);
-        if (it.exprNode instanceof UnaryExprNode)
-            throw new syntaxError("LeftValue is expected", it.pos);
+        //if (it.exprNode instanceof UnaryExprNode)
+        //    throw new syntaxError("LeftValue is expected", it.pos);
     }
     public void visit(ForStmtNode it){
         if (it.varDef != null) it.varDef.accept(this);
@@ -426,6 +426,8 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(UnaryExprNode it){
         it.expr.accept(this);
         //maybe need some change
+        if (!it.expr.isAssignable())
+            throw new syntaxError("LeftValue is expected", it.pos);
         if (!it.expr.type.equals(IntType) && !it.expr.type.equals(BoolType))
             throw new semanticError("Invalid Variable Type", it.pos);
         it.type = it.expr.type;
