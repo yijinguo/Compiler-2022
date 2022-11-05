@@ -114,7 +114,8 @@ public class globalScope extends Scope {
 
     public Type getType(String name, position pos){
         if (!types.containsKey(name)) return null;
-        return new Type(types.get(name));
+        Type type = new Type(types.get(name));
+        return type;
     }
 
     public ClassDefNode getClass(String name, position pos){

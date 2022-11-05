@@ -52,6 +52,8 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         for (int i = 0; i < ctx.type().size(); ++i) {
             VarDefUnitNode it = new VarDefUnitNode(new position(ctx));
             it.type = (TypeNode) visit(ctx.type(i));
+            if (ctx.type(i).LBracket().size() != 0)
+                it.type.type.isArray = true;
             it.varName = ctx.Identifier(i).getText();
             params.varList.add(it);
         }

@@ -105,6 +105,8 @@ public class SemanticChecker implements ASTVisitor {
             default:
                 if (!GlobalScope.haveType(it.type.typeName))
                     throw new semanticError("Undefined Type", it.pos);
+                if (GlobalScope.classList.containsKey(it.type.typeName))
+                    it.type.isClass = true;
         }
     }
 
@@ -150,13 +152,7 @@ public class SemanticChecker implements ASTVisitor {
         }
     }
     public void visit(ReturnStmtNode it){
-        if (it.expr == null) {
-            if (((funcScope) currentScope).builder || ((funcScope) currentScope).returnType.type.equals(VoidType)) {
-                currentScope.put_return();
-                return;
-            } else throw new syntaxError("Lack Return", it.pos);
-        }
-        it.expr.accept(this);
+        if (it.expr != null) it.expr.accept(this);
         Scope s = new Scope(currentScope);
         while (s != GlobalScope) {
             s = s.parentScope;
@@ -164,6 +160,17 @@ public class SemanticChecker implements ASTVisitor {
         }
         if (!(s instanceof funcScope))
             throw new syntaxError("Invalid Return", it.pos);
+        if (((funcScope) s).builder) {
+            if (it.expr != null) throw new semanticError("cannot return any value in a constructor", it.pos);
+            currentScope.put_return();
+            return;
+        }
+        if (it.expr == null) {
+            if (((funcScope) s).returnType.type.equals(VoidType)) {
+                currentScope.put_return();
+                return;
+            } else throw new syntaxError("Lack Return", it.pos);
+        }
         if (!it.expr.type.equals(((funcScope) s).returnType.type)) {
             if (it.expr.type.typeName.equals("this")) {
                 Type classType = currentScope.catch_class();
@@ -173,7 +180,8 @@ public class SemanticChecker implements ASTVisitor {
                     throw new semanticError("Invalid Use of This", it.pos);
                 }
             } else {
-                throw new semanticError("Unmatched ReturnType", it.pos);
+                if (!(((funcScope) s).returnType.type.isClass && it.expr.type.equals(NullType)))
+                    throw new semanticError("Unmatched ReturnType", it.pos);
             }
         }
         currentScope.put_return();
@@ -286,13 +294,19 @@ public class SemanticChecker implements ASTVisitor {
         if (lType.isArray || rType.isArray) {
             if (!it.op.equals("==") && !it.op.equals("!="))
                 throw new syntaxError("Invalid BinaryExpr Type", it.pos);
-            if (lType.isArray && rType != NullType || rType.isArray && lType != NullType)
+            if (lType.isArray && !rType.equals(NullType) || rType.isArray && lType.equals(NullType))
                 throw new syntaxError("Invalid Type", it.pos);
             it.type = BoolType;
             return;
         }
         if (it.op.equals("==") || it.op.equals("!=")) {
-            if (!lType.equals(rType)) throw new semanticError("Unmatched Type", it.pos);
+            if (!lType.equals(rType)) {
+                if (rType.equals(NullType) && lType.isClass) {
+                    it.type = BoolType;
+                    return;
+                }
+                throw new semanticError("Unmatched Type", it.pos);
+            }
             if (!lType.equals(BoolType) && !lType.equals(IntType) && !lType.equals(StringType) && !lType.equals(NullType)) {
                 if (GlobalScope.getClass(it.lhs.str, it.pos) == null)
                     throw new syntaxError("Invalid Type", it.pos);
@@ -348,9 +362,6 @@ public class SemanticChecker implements ASTVisitor {
             }
         }
         it.type = t.returnType.type;
-        if (it.type.typeName.equals("A")) {
-            int debug = 20;
-        }
     }
     public void visit(LambdaExprNode it){
         if (it.params != null)
