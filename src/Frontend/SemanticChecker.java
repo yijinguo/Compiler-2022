@@ -150,7 +150,10 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(ReturnStmtNode it){
         if (it.expr == null) {
-            if (((funcScope) currentScope).returnType.type.equals(VoidType)) return;
+            if (((funcScope) currentScope).returnType.type.equals(VoidType)) {
+                currentScope.put_return();
+                return;
+            }
             else throw new syntaxError("Lack Return", it.pos);
         }
         it.expr.accept(this);
@@ -325,7 +328,7 @@ public class SemanticChecker implements ASTVisitor {
                 throw new semanticError("Undefined Function", it.pos);
             it.type = IntType;
             it.funcDef = GlobalScope.getFunc("size");
-        } else /*if (it.name.str != null)*/ {
+        } else if (it.name.str != null) {
             if (it.name.type.equals(StringType)) {
                 it.name.str = "string";
             } else if (it.name.type.typeName.equals("this")) {
