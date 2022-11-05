@@ -8,7 +8,6 @@ import Util.position;
 import java.util.ArrayList;
 
 public class LambdaExprNode extends ExprNode{
-
     public boolean isGlobe;
     public ParameterListNode params;
     public ArrayList<StmtNode> stmts = new ArrayList<>();

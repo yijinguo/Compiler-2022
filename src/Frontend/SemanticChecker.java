@@ -83,8 +83,14 @@ public class SemanticChecker implements ASTVisitor {
         it.type.accept(this);
         if (!(currentScope instanceof classScope) && currentScope.have_var(it.varName))
             throw new semanticError("Redefined of variable", it.pos);
-        if (it.init != null)
+        if (it.init != null) {
             it.init.accept(this);
+            if (it.init instanceof LambdaExprNode) {
+                int debug = 100;
+                if (!it.init.type.equals(it.type.type))
+                    throw new semanticError("Unmatched Type", it.pos);
+            }
+        }
         if (it.type.type.isArray) {
             if (it.init != null && !it.init.type.equals(NullType)){
                 if (it.type.type.dim != it.init.type.dim)
@@ -357,7 +363,8 @@ public class SemanticChecker implements ASTVisitor {
             for (int i = 0; i < it.lists.exprs.size(); ++i) {
                 //type均未写明，此处应该调用一次AtomExpr的accept,给type赋值
                 it.lists.exprs.get(i).accept(this);
-                if (!it.lists.exprs.get(i).type.equals(t.params.varList.get(i).type.type))
+                if (!it.lists.exprs.get(i).type.equals(NullType) &&
+                        !it.lists.exprs.get(i).type.equals(t.params.varList.get(i).type.type))
                     throw new syntaxError("Unmatched ParameterList", it.pos);
             }
         }
@@ -385,7 +392,8 @@ public class SemanticChecker implements ASTVisitor {
                 flag = true;
             }
         }
-        if (!flag) it.type = VoidType;
+        if (!flag)
+            it.type = VoidType;
         if (it.lists != null)
             it.lists.accept(this);
         if (it.params != null) {
