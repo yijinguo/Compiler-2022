@@ -63,8 +63,9 @@ public class SemanticChecker implements ASTVisitor {
             (it.stmts.get(i)).accept(this);
             if (it.stmts.get(i) instanceof ReturnStmtNode) flag = true;
         }
-        //it.stmts.forEach(x->x.accept(this));
+        if (!currentScope.hasReturn) throw new semanticError("Lack Return", it.pos);
         //关于无返回值的问题
+        /*
         if (!flag) {
             if (!it.returnType.type.equals(VoidType) && !it.funcName.equals("main"))
                 throw new semanticError("Lack Return", it.pos);
@@ -73,6 +74,7 @@ public class SemanticChecker implements ASTVisitor {
         if (currentScope instanceof classScope) {
             ((classScope) currentScope).add_func(it.funcName, it);
         }
+         */
     }
     public void visit(ParameterListNode it){
         it.varList.forEach(x->x.accept(this));
@@ -87,7 +89,7 @@ public class SemanticChecker implements ASTVisitor {
         if (it.init != null)
             it.init.accept(this);
         if (it.type.type.isArray) {
-            if (it.init != null){
+            if (it.init != null && !it.init.type.equals(NullType)){
                 if (it.type.type.dim != it.init.type.dim)
                     throw new semanticError("Unmatched Dimension", it.pos);
             }
@@ -161,6 +163,7 @@ public class SemanticChecker implements ASTVisitor {
             throw new syntaxError("Invalid Return", it.pos);
         if (!it.expr.type.equals(((funcScope) s).returnType.type))
             throw new semanticError("Unmatched ReturnType", it.pos);
+        currentScope.put_return();
     }
     public void visit(SuiteNode it){
         currentScope = new Scope(currentScope);
@@ -251,7 +254,7 @@ public class SemanticChecker implements ASTVisitor {
         }
         if (it.op.equals("==") || it.op.equals("!=")) {
             if (!lType.equals(rType)) throw new semanticError("Unmatched Type", it.pos);
-            if (!lType.equals(BoolType) && !lType.equals(IntType) && !lType.equals(StringType)) {
+            if (!lType.equals(BoolType) && !lType.equals(IntType) && !lType.equals(StringType) && !lType.equals(NullType)) {
                 if (GlobalScope.getClass(it.lhs.str, it.pos) == null)
                     throw new syntaxError("Invalid Type", it.pos);
             }
@@ -322,7 +325,7 @@ public class SemanticChecker implements ASTVisitor {
                 throw new semanticError("Undefined Function", it.pos);
             it.type = IntType;
             it.funcDef = GlobalScope.getFunc("size");
-        } else if (it.name.str != null) {
+        } else /*if (it.name.str != null)*/ {
             if (it.name.type.equals(StringType)) {
                 it.name.str = "string";
             } else if (it.name.type.typeName.equals("this")) {
@@ -372,6 +375,7 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(PreAddExprNode it){
         it.expr.accept(this);
         if (!it.expr.type.equals(IntType)) throw new semanticError("Not a Variable", it.pos);
+        if (!it.expr.isAssignable()) throw new semanticError("Not Assignable", it.pos);
         it.type = IntType;
     }
     public void visit(UnaryExprNode it){

@@ -33,7 +33,7 @@ public class globalScope extends Scope {
         ParameterListNode SubStringList = new ParameterListNode(null);
         SubStringList.varList.add(new VarDefUnitNode(null, IntType,"left"));
         SubStringList.varList.add(new VarDefUnitNode(null, IntType,"right"));
-        FuncDefNode SubString = new FuncDefNode(null, StringType, "subString", SubStringList);
+        FuncDefNode SubString = new FuncDefNode(null, StringType, "substring", SubStringList);
 
         FuncDefNode ParseInt = new FuncDefNode(null, IntType, "parseInt", null);
 
@@ -46,7 +46,7 @@ public class globalScope extends Scope {
         classStringDeclNode.funcList.add(ParseInt);
         classStringDeclNode.funcList.add(Ord);
         classStringDeclNode.funcMem.put("length", Length);
-        classStringDeclNode.funcMem.put("subString", SubString);
+        classStringDeclNode.funcMem.put("substring", SubString);
         classStringDeclNode.funcMem.put("parseInt", ParseInt);
         classStringDeclNode.funcMem.put("ord", Ord);
 

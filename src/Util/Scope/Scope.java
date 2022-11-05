@@ -16,6 +16,8 @@ public class Scope {
 
     public Scope parentScope;
 
+    public boolean hasReturn = false;
+
     public Scope(Scope parentScope){
         this.parentScope = parentScope;
     }
@@ -58,6 +60,15 @@ public class Scope {
 
     public boolean have_func(String name){
         return functionMembers.containsKey(name);
+    }
+
+    public void put_return(){
+        hasReturn = true;
+        Scope tmp = this;
+        while (tmp != null) {
+            tmp.hasReturn = true;
+            tmp = tmp.parentScope;
+        }
     }
 
     public Scope getCurrentScope(){
