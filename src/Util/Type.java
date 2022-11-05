@@ -18,6 +18,13 @@ public class Type {
         this.typeName = name;
     }
 
+    public Type(Type other){
+        this.typeName = other.typeName;
+        this.isArray = other.isArray;
+        this.isClass = other.isClass;
+        this.dim = other.dim;
+    }
+
     public boolean equals(Type other){
         return this.typeName.equals(other.typeName);
     }

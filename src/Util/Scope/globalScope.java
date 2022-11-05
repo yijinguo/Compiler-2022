@@ -94,6 +94,14 @@ public class globalScope extends Scope {
         functionMembers.put("toString", ToString);
     }
 
+    public void create_lambda(){
+        types.put("int", new Type("int"));
+        types.put("bool", new Type("bool"));
+        types.put("void", new Type("void"));
+        types.put("null", new Type("null"));
+        types.put("string", new Type("string"));
+    }
+
     public globalScope(Scope parentScope){
         super(parentScope);
     }
@@ -106,7 +114,7 @@ public class globalScope extends Scope {
 
     public Type getType(String name, position pos){
         if (!types.containsKey(name)) return null;
-        return types.get(name);
+        return new Type(types.get(name));
     }
 
     public ClassDefNode getClass(String name, position pos){

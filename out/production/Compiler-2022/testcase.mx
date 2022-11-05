@@ -1,23 +1,14 @@
-/* 55
+/*
 Test Package: Sema_Local_Preview
-Test Target: Basic
-Author: 16' Yuxuan Duan
-Time: 2019-11-11
-Verdict: Success
+Test Target: Array
+Author: 17' Yifan Xu
+Time: 2020-02-26
+Verdict: Failed
+Comment: The size of array cannot be of boolean type.
 Origin Package: Semantic Pretest
 */
-class A
-{
-	void b(int d)
-	{
-	}
-	int e;
-
-	void c(int b)
-	{
-		this.b(b);
-	}
-};
 int main()
 {
+    int[] a = new int[false];
+    return 0;
 }
