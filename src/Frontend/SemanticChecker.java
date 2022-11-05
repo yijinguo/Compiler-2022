@@ -428,8 +428,9 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(UnaryExprNode it){
         it.expr.accept(this);
         //maybe need some change
-        //if (!it.expr.isAssignable())
-        //    throw new syntaxError("LeftValue is expected", it.pos);
+        if (it.op.equals("++") || it.op.equals("--"))
+            if (!it.expr.isAssignable())
+                throw new syntaxError("LeftValue is expected", it.pos);
         if (!it.expr.type.equals(IntType) && !it.expr.type.equals(BoolType))
             throw new semanticError("Invalid Variable Type", it.pos);
         it.type = it.expr.type;
