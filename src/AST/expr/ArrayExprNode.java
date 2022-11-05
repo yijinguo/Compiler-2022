@@ -7,6 +7,7 @@ public class ArrayExprNode extends ExprNode{
 
     public ExprNode arrayName;
     public ExprNode index;
+    public int dim = 0;
 
     public ArrayExprNode(position pos){
         super(pos);

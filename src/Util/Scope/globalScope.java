@@ -55,9 +55,9 @@ public class globalScope extends Scope {
         classList.put("string", classStringDeclNode);
 
         //数组内建函数
-        ParameterListNode ArrayInitList = new ParameterListNode(null);
-        ArrayInitList.varList.add(new VarDefUnitNode(null, StringType, "str"));
-        FuncDefNode ArrayInit = new FuncDefNode(null, IntType, "size", ArrayInitList);
+        //ParameterListNode ArrayInitList = new ParameterListNode(null);
+        //ArrayInitList.varList.add(new VarDefUnitNode(null, StringType, "str"));
+        FuncDefNode ArrayInit = new FuncDefNode(null, IntType, "size", null);
 
         //内建函数
         ParameterListNode PrintList = new ParameterListNode(null);

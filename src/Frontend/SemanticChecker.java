@@ -82,15 +82,16 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(VarDefUnitNode it){
         it.type.accept(this);
-        if (it.init != null) {
-            it.init.accept(this);
-        }
-        if (it.type.type.isArray) {
-            if (it.init == null || it.type.type.dim != it.init.type.dim)
-                throw new semanticError("Unmatched Dimension", it.pos);
-        }
         if (currentScope.have_var(it.varName))
             throw new semanticError("Redefined of variable", it.pos);
+        if (it.init != null)
+            it.init.accept(this);
+        if (it.type.type.isArray) {
+            if (it.init != null){
+                if (it.type.type.dim != it.init.type.dim)
+                    throw new semanticError("Unmatched Dimension", it.pos);
+            }
+        }
         currentScope.add_var(it);
     }
     public void visit(TypeNode it) {
@@ -179,36 +180,60 @@ public class SemanticChecker implements ASTVisitor {
     }
 
     //public void visit(ExprNode it){}
-    public void visit(ArrayExprNode it){
+    public void visit(ArrayExprNode it) {
+        it.index.accept(this);
+        it.type = new Type();
+        if (!(it.index.type.equals(IntType)))
+            throw new semanticError("Invalid Index", it.pos);
         it.arrayName.accept(this);
-        if (it.index != null) it.index.accept(this);
-        VarDefUnitNode var = currentScope.getVar(it.arrayName.str);
-        if (var.type.type.dim != it.arrayName.type.dim + 1) throw new syntaxError("Unmatched ArrayDim", it.pos);
+        it.type.typeName = it.arrayName.type.typeName;
+        if (it.arrayName instanceof ArrayExprNode) {
+            it.dim = ((ArrayExprNode) it.arrayName).dim - 1;
+        } else {
+            if (!it.arrayName.type.isArray)
+                throw new semanticError("Not An Array", it.pos);
+            it.dim = it.arrayName.type.dim - 1;
+        }
+        it.type.dim = it.dim;
+        it.str = it.arrayName.str;
+        if (it.dim > 0) it.type.isArray = true;
+        else if (it.dim == 0) it.type.isArray = false;
+        else throw new semanticError("Out of ArrayDimension", it.pos);
     }
-    public void visit(AssignExprNode it){
+    public void visit(AssignExprNode it) {
         it.lhs.accept(this);
         it.rhs.accept(this);
-        if(!it.lhs.isAssignable())
+        if (!it.lhs.isAssignable())
             throw new syntaxError("It is Not Assignable", it.pos);
-        if (!it.lhs.type.equals(it.rhs.type))
-            throw new syntaxError("Unmatched AssignType", it.pos);
-    }
-    public void visit(AtomExprNode it){
-        if (it.type == null) {
-            VarDefUnitNode var = currentScope.getVar(it.str);
-            FuncDefNode func = currentScope.getFunc(it.str);
-            ClassDefNode classDef = GlobalScope.getClass(it.str, it.pos);
-            if (var == null && func == null && classDef == null)
-                throw new semanticError("Undefined AtomExpr", it.pos);
-            if (var != null) {
-                it.type = var.type.type;
-            } else if (func != null) {
-                it.type = func.returnType.type;
-                it.funcDef = func;
-            } else {
-                it.type = new Type();
-                it.type.isClass = true;
+        if (!it.rhs.type.equals(NullType)) {
+            if (!it.lhs.type.equals(it.rhs.type))
+                throw new syntaxError("Unmatched AssignType", it.pos);
+        } else {
+            if (!it.lhs.type.isArray && !it.lhs.type.isClass) {
+                //todo  赋值表达式什么类型可以等于null？
+                throw new syntaxError("Unmatched AssignType", it.pos);
             }
+        }
+    }
+    public void visit(AtomExprNode it) {
+        /*if (it.type == null) {*/
+        VarDefUnitNode var = currentScope.getVar(it.str);
+        FuncDefNode func = currentScope.getFunc(it.str);
+        ClassDefNode classDef = GlobalScope.getClass(it.str, it.pos);
+        if (var == null && func == null && classDef == null) {
+            if (it.type == null) throw new semanticError("Undefined AtomExpr", it.pos);
+        }
+        if (var != null) {
+            it.type = var.type.type;
+            it.str = var.varName;
+        } else if (func != null) {
+            it.type = func.returnType.type;
+            it.str = func.funcName;
+            it.funcDef = func;
+        } else if (classDef != null) {
+            it.type = new Type();
+            it.str = classDef.name;
+            it.type.isClass = true;
         }
     }
     public void visit(BinaryExprNode it){
@@ -267,9 +292,6 @@ public class SemanticChecker implements ASTVisitor {
                 throw new syntaxError("Undefined Function", it.pos);
         }
         syntaxError paramsError = new syntaxError("Unmatched ParameterList", it.pos);
-        if (t == null) {
-            int debug = 7;
-        }
         if (it.lists == null && t.params != null) {
             throw paramsError;
         }
@@ -294,6 +316,12 @@ public class SemanticChecker implements ASTVisitor {
             it.type = StringType;
             ClassDefNode stringClass = GlobalScope.getClass("string", it.pos);
             it.funcDef = stringClass.get_func(it.member);
+        } else if (it.name.type.isArray) {
+            //todo
+            if (!it.member.equals("size"))
+                throw new semanticError("Undefined Function", it.pos);
+            it.type = IntType;
+            it.funcDef = GlobalScope.getFunc("size");
         } else if (it.name.str != null) {
             if (it.name.type.equals(StringType)) {
                 it.name.str = "string";
@@ -329,7 +357,6 @@ public class SemanticChecker implements ASTVisitor {
             }
             it.type.isClass = true;
         }
-
     }
     public void visit(NewExprNode it){
         if (!GlobalScope.haveType(it.typeName))
@@ -340,12 +367,11 @@ public class SemanticChecker implements ASTVisitor {
         }
         it.type = GlobalScope.getType(it.typeName, null);
         it.type.dim = it.dim;
+        if (it.dim > 0) it.type.isArray = true;
     }
     public void visit(PreAddExprNode it){
         it.expr.accept(this);
-        //if (it.expr.str == null) throw new syntaxError("Not a variable", it.pos);
         if (!it.expr.type.equals(IntType)) throw new semanticError("Not a Variable", it.pos);
-        //if (currentScope.getVar(it.expr.str) == null) throw new syntaxError("Undefined Variable", it.pos);
         it.type = IntType;
     }
     public void visit(UnaryExprNode it){
@@ -353,7 +379,6 @@ public class SemanticChecker implements ASTVisitor {
         //maybe need some change
         if (!it.expr.type.equals(IntType) && !it.expr.type.equals(BoolType))
             throw new semanticError("Invalid Variable Type", it.pos);
-
         it.type = it.expr.type;
     }
  
