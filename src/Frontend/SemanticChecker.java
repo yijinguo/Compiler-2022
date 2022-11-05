@@ -54,6 +54,9 @@ public class SemanticChecker implements ASTVisitor {
         currentScope = currentScope.parentScope;
     }
     public void visit(FuncDefNode it){
+        if (it.funcName.equals("many")) {
+            int debug = 19;
+        }
         it.returnType.accept(this);
         currentScope = new funcScope(currentScope);
         ((funcScope) currentScope).returnType = it.returnType;
@@ -341,6 +344,9 @@ public class SemanticChecker implements ASTVisitor {
             }
         }
         it.type = t.returnType.type;
+        if (it.type.typeName.equals("A")) {
+            int debug = 20;
+        }
     }
     public void visit(LambdaExprNode it){
         if (it.params != null)
@@ -391,7 +397,7 @@ public class SemanticChecker implements ASTVisitor {
                 throw new semanticError("Undefined Function", it.pos);
             it.type = IntType;
             it.funcDef = GlobalScope.getFunc("size");
-        } else if (it.name.str != null) {
+        } else if (it.name.str != null || it.name instanceof NewExprNode) {
             if (it.name.type.equals(StringType)) {
                 it.name.str = "string";
             } else if (it.name.type.typeName.equals("this")) {
