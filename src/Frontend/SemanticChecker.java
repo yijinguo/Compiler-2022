@@ -86,7 +86,6 @@ public class SemanticChecker implements ASTVisitor {
         if (it.init != null) {
             it.init.accept(this);
             if (it.init instanceof LambdaExprNode) {
-                int debug = 100;
                 if (!it.init.type.equals(it.type.type))
                     throw new semanticError("Unmatched Type", it.pos);
             }
@@ -461,9 +460,6 @@ public class SemanticChecker implements ASTVisitor {
             throw new semanticError("Undefined Type", it.pos);
         for (int i = it.sizeList.size() - 1; i >= 0; --i) {
             it.sizeList.get(i).accept(this);
-            if (it.sizeList.get(i).type == null) {
-                int debug = 15;
-            }
             if (!it.sizeList.get(i).type.equals(IntType))
                 throw new syntaxError("Invalid New Expression", it.pos);
             if (i != 0)

@@ -1,29 +1,12 @@
 /*
 Test Package: Sema_Local_Preview
-Test Target: Lambda-1
-Author: 17' zwx
+Test Target: Basic
+Author: 12' Chaoliao
+Time: 2019-10-20
 Verdict: Fail
-Origin Package: Semantic Pretest
+Comment: No definition of A
+Origin Package: Semantic Extended
 */
-
-
-int main(){
-    int d = [&](int a) -> {
-        int f = a;
-        int sum = 0;
-        while(f > 0){
-            sum = sum + f;
-            f = f / 4;
-        }
-        int q = [&](int a) -> {
-            if(a > 0){
-                int q = [&](int d) -> {return d + 20;}(a);
-            } else {
-                int q = [&](int d) -> {return d + 10;}(a);
-            }
-        }(sum);
-        return q;
-    }(10086);
-    d++;
-    return d;
+int main() {
+    A x = new A;
 }
