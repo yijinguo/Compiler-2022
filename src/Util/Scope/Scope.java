@@ -5,6 +5,7 @@ import AST.FuncDefNode;
 import AST.TypeNode;
 import AST.VarDefUnitNode;
 import AST.expr.ExprNode;
+import Util.Type;
 import Util.error.semanticError;
 
 import java.util.HashMap;
@@ -69,6 +70,17 @@ public class Scope {
             tmp.hasReturn = true;
             tmp = tmp.parentScope;
         }
+    }
+
+    public Type catch_class(){
+        Scope tmp = this;
+        while (tmp != null) {
+            if (tmp instanceof classScope) {
+                return ((classScope) tmp).ClassType;
+            }
+            tmp = tmp.parentScope;
+        }
+        return null;
     }
 
     public Scope getCurrentScope(){

@@ -36,6 +36,7 @@ public class SemanticChecker implements ASTVisitor {
 
     public void visit(ClassDefNode it){
         currentScope = new classScope(currentScope, it.name);
+        ((classScope) currentScope).create_class(it);
         it.varList.forEach(x->x.accept(this));
         if (it.classBuilder != null) {
             if (it.name.equals(it.classBuilder.name))
@@ -65,9 +66,10 @@ public class SemanticChecker implements ASTVisitor {
         if (!it.funcName.equals("main") && !it.returnType.type.equals(VoidType) && !currentScope.hasReturn)
             throw new semanticError("Lack Return", it.pos);
         currentScope = currentScope.parentScope;
+        /*
         if (currentScope instanceof classScope) {
             ((classScope) currentScope).add_func(it.funcName, it);
-        }
+        }*/
     }
     public void visit(ParameterListNode it){
         it.varList.forEach(x->x.accept(this));
@@ -77,7 +79,7 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(VarDefUnitNode it){
         it.type.accept(this);
-        if (currentScope.have_var(it.varName))
+        if (!(currentScope instanceof classScope) && currentScope.have_var(it.varName))
             throw new semanticError("Redefined of variable", it.pos);
         if (it.init != null)
             it.init.accept(this);
@@ -87,7 +89,7 @@ public class SemanticChecker implements ASTVisitor {
                     throw new semanticError("Unmatched Dimension", it.pos);
             }
         }
-        currentScope.add_var(it);
+        if (!(currentScope instanceof classScope)) currentScope.add_var(it);
     }
     public void visit(TypeNode it) {
         switch (it.type.typeName) {
@@ -161,8 +163,18 @@ public class SemanticChecker implements ASTVisitor {
         }
         if (!(s instanceof funcScope))
             throw new syntaxError("Invalid Return", it.pos);
-        if (!it.expr.type.equals(((funcScope) s).returnType.type))
-            throw new semanticError("Unmatched ReturnType", it.pos);
+        if (!it.expr.type.equals(((funcScope) s).returnType.type)) {
+            if (it.expr.type.typeName.equals("this")) {
+                Type classType = currentScope.catch_class();
+                if (classType != null) {
+                    it.expr.type = classType;
+                } else {
+                    throw new semanticError("Invalid Use of This", it.pos);
+                }
+            } else {
+                throw new semanticError("Unmatched ReturnType", it.pos);
+            }
+        }
         currentScope.put_return();
     }
     public void visit(SuiteNode it){
@@ -230,23 +242,33 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(AtomExprNode it) {
         /*if (it.type == null) {*/
-        VarDefUnitNode var = currentScope.getVar(it.str);
-        FuncDefNode func = currentScope.getFunc(it.str);
-        ClassDefNode classDef = GlobalScope.getClass(it.str, it.pos);
-        if (var == null && func == null && classDef == null) {
-            if (it.type == null) throw new semanticError("Undefined AtomExpr", it.pos);
-        }
-        if (var != null) {
-            it.type = var.type.type;
-            it.str = var.varName;
-        } else if (func != null) {
-            it.type = func.returnType.type;
-            it.str = func.funcName;
-            it.funcDef = func;
-        } else if (classDef != null) {
-            it.type = new Type();
-            it.str = classDef.name;
-            it.type.isClass = true;
+        if (!it.str.equals("this")) {
+            VarDefUnitNode var = currentScope.getVar(it.str);
+            FuncDefNode func = currentScope.getFunc(it.str);
+            ClassDefNode classDef = GlobalScope.getClass(it.str, it.pos);
+            if (var == null && func == null && classDef == null) {
+                if (it.type == null)
+                    throw new semanticError("Undefined AtomExpr", it.pos);
+            }
+            if (var != null) {
+                it.type = var.type.type;
+                it.str = var.varName;
+            } else if (func != null) {
+                it.type = func.returnType.type;
+                it.str = func.funcName;
+                it.funcDef = func;
+            } else if (classDef != null) {
+                it.type = new Type();
+                it.str = classDef.name;
+                it.type.isClass = true;
+            }
+        } else {
+            Type type = currentScope.catch_class();
+            if (type == null) {
+                throw new semanticError("Invalid This", it.pos);
+            } else {
+                it.type = type;
+            }
         }
     }
     public void visit(BinaryExprNode it){
@@ -304,18 +326,18 @@ public class SemanticChecker implements ASTVisitor {
             if (t == null)
                 throw new syntaxError("Undefined Function", it.pos);
         }
-        syntaxError paramsError = new syntaxError("Unmatched ParameterList", it.pos);
+        //syntaxError paramsError = new syntaxError("Unmatched ParameterList", it.pos);
         if (it.lists == null && t.params != null) {
-            throw paramsError;
+            throw new syntaxError("Unmatched ParameterList", it.pos);
         }
         if (it.lists != null) {
             if (t.params == null || t.params.varList.size() != it.lists.exprs.size())
-                throw paramsError;
+                throw new syntaxError("Unmatched ParameterList", it.pos);
             for (int i = 0; i < it.lists.exprs.size(); ++i) {
                 //type均未写明，此处应该调用一次AtomExpr的accept,给type赋值
                 it.lists.exprs.get(i).accept(this);
                 if (!it.lists.exprs.get(i).type.equals(t.params.varList.get(i).type.type))
-                    throw paramsError;
+                    throw new syntaxError("Unmatched ParameterList", it.pos);
             }
         }
         it.type = t.returnType.type;
@@ -409,6 +431,10 @@ public class SemanticChecker implements ASTVisitor {
         if (!GlobalScope.haveType(it.typeName))
             throw new semanticError("Undefined Type", it.pos);
         for (int i = it.sizeList.size() - 1; i >= 0; --i) {
+            it.sizeList.get(i).accept(this);
+            if (it.sizeList.get(i).type == null) {
+                int debug = 15;
+            }
             if (!it.sizeList.get(i).type.equals(IntType))
                 throw new syntaxError("Invalid New Expression", it.pos);
             if (i != 0)
