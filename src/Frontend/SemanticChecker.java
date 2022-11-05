@@ -115,8 +115,6 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(ExprStmtNode it) {
         if (it.exprNode != null) it.exprNode.accept(this);
-        //if (it.exprNode instanceof UnaryExprNode)
-        //    throw new syntaxError("LeftValue is expected", it.pos);
     }
     public void visit(ForStmtNode it){
         if (it.varDef != null) it.varDef.accept(this);
@@ -135,13 +133,17 @@ public class SemanticChecker implements ASTVisitor {
         it.condition.accept(this);
         if (!it.condition.type.equals(BoolType))
             throw new semanticError("Invalid Condition", it.pos);
-        currentScope = new loopScope(currentScope);
         //没有考虑if和else的大括号省略问题
-        if (it.thenStmts.size() != 0)
-            it.thenStmts.forEach(x->x.accept(this));
-        if (it.elseStmts.size() != 0)
+        if (it.thenStmts.size() != 0) {
+            currentScope = new loopScope(currentScope);
+            it.thenStmts.forEach(x -> x.accept(this));
+            currentScope = currentScope.parentScope;
+        }
+        if (it.elseStmts.size() != 0) {
+            currentScope = new loopScope(currentScope);
             it.elseStmts.forEach(x->x.accept(this));
-        currentScope = currentScope.parentScope;
+            currentScope = currentScope.parentScope;
+        }
     }
     public void visit(ReturnStmtNode it){
         if (it.expr == null) {
@@ -329,6 +331,8 @@ public class SemanticChecker implements ASTVisitor {
                 for (VarDefUnitNode y : it.params.varList)
                     currentScope.add_var(y);
             }
+        } else {
+            currentScope = new Scope(currentScope);
         }
         boolean flag = false;
         for (StmtNode x : it.stmts) {
@@ -349,9 +353,7 @@ public class SemanticChecker implements ASTVisitor {
                     throw new semanticError("Unmatched parameterList", it.pos);
             }
         }
-        if (!it.isGlobe) {
-            currentScope = tmp;
-        }
+        currentScope = tmp;
     }
     public void visit(MemberExprNode it){
         it.str = it.member;
@@ -426,8 +428,8 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(UnaryExprNode it){
         it.expr.accept(this);
         //maybe need some change
-        if (!it.expr.isAssignable())
-            throw new syntaxError("LeftValue is expected", it.pos);
+        //if (!it.expr.isAssignable())
+        //    throw new syntaxError("LeftValue is expected", it.pos);
         if (!it.expr.type.equals(IntType) && !it.expr.type.equals(BoolType))
             throw new semanticError("Invalid Variable Type", it.pos);
         it.type = it.expr.type;
