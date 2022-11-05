@@ -8,6 +8,8 @@ public class funcScope extends Scope{
     public TypeNode returnType;
     public ParameterListNode parameter;
 
+    public boolean builder = false;
+
     public boolean isConstructor = false;
 
     public funcScope(Scope parent){

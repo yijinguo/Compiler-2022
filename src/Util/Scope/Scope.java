@@ -63,6 +63,15 @@ public class Scope {
         return functionMembers.containsKey(name);
     }
 
+    public Scope find_func(){
+        Scope t = this;
+        while (t != null) {
+            if (t instanceof funcScope) return t;
+            t = t.parentScope;
+        }
+        return null;
+    }
+
     public void put_return(){
         hasReturn = true;
         Scope tmp = this;

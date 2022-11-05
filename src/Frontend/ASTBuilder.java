@@ -36,9 +36,6 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         FuncDefNode funcDef = new FuncDefNode(new position(ctx), ctx.Identifier().getText());
         funcDef.returnType = (TypeNode) visit(ctx.returnType());
         if (funcDef.returnType.type.dim != 0) funcDef.returnType.type.isArray = true;
-        if (funcDef.funcName.equals("many")) {
-            int debug = 21;
-        }
         if (ctx.parameterList() != null)
             funcDef.params = (ParameterListNode) visit(ctx.parameterList());
         funcDef.stmts = ((SuiteNode) visit(ctx.suite())).stmts;

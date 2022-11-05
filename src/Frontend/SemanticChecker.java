@@ -49,14 +49,13 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(ClassBuildNode it){
         currentScope = new funcScope(currentScope);
+        ((funcScope) currentScope).returnType = new TypeNode(it.pos, it.name);
         ((funcScope) currentScope).isConstructor = true;
+        ((funcScope) currentScope).builder = true;
         it.suites.accept(this);
         currentScope = currentScope.parentScope;
     }
     public void visit(FuncDefNode it){
-        if (it.funcName.equals("many")) {
-            int debug = 19;
-        }
         it.returnType.accept(this);
         currentScope = new funcScope(currentScope);
         ((funcScope) currentScope).returnType = it.returnType;
@@ -152,11 +151,10 @@ public class SemanticChecker implements ASTVisitor {
     }
     public void visit(ReturnStmtNode it){
         if (it.expr == null) {
-            if (((funcScope) currentScope).returnType.type.equals(VoidType)) {
+            if (((funcScope) currentScope).builder || ((funcScope) currentScope).returnType.type.equals(VoidType)) {
                 currentScope.put_return();
                 return;
-            }
-            else throw new syntaxError("Lack Return", it.pos);
+            } else throw new syntaxError("Lack Return", it.pos);
         }
         it.expr.accept(this);
         Scope s = new Scope(currentScope);
@@ -181,7 +179,13 @@ public class SemanticChecker implements ASTVisitor {
         currentScope.put_return();
     }
     public void visit(SuiteNode it){
-        currentScope = new Scope(currentScope);
+        if ((currentScope instanceof funcScope) && ((funcScope) currentScope).builder) {
+            currentScope = new funcScope(currentScope);
+            ((funcScope) currentScope).returnType = ((funcScope)currentScope.parentScope).returnType;
+            ((funcScope) currentScope).builder = true;
+        } else {
+            currentScope = new Scope(currentScope);
+        }
         if (it.stmts != null)
             it.stmts.forEach(x -> x.accept(this));
         currentScope = currentScope.parentScope;
