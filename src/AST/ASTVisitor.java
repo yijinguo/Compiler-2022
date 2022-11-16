@@ -2,10 +2,11 @@ package AST;
 
 import AST.expr.*;
 import AST.stmt.*;
+import com.sun.tools.javac.Main;
 
 public interface ASTVisitor {
     public void visit(RootNode it);
-
+    public void visit(MainFnNode it);
     public void visit(ClassDefNode it);
     public void visit(ClassBuildNode it);
     public void visit(FuncDefNode it);

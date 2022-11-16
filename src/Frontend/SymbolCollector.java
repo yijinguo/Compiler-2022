@@ -6,6 +6,7 @@ import AST.stmt.*;
 import Util.Scope.*;
 import Util.Type;
 import Util.error.*;
+import com.sun.tools.javac.Main;
 
 public class SymbolCollector implements ASTVisitor{
 
@@ -31,6 +32,8 @@ public class SymbolCollector implements ASTVisitor{
         catchClassType = true;
         it.DefList.forEach(def -> def.accept(this));
     }
+
+    public void visit(MainFnNode it){}
 
     public void visit(ClassDefNode it) {
         if (!catchClassType) {

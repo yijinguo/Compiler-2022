@@ -1,8 +1,8 @@
 package AST.expr;
 
 import AST.ASTNode;
-import AST.ASTVisitor;
 import AST.FuncDefNode;
+import MIR.*;
 import Util.Type;
 import Util.position;
 
@@ -10,6 +10,7 @@ public abstract class ExprNode extends ASTNode {
 
     public String str;
     public Type type;
+    public entity val;
     public FuncDefNode funcDef = null;
 
     public ExprNode(position pos){

@@ -32,7 +32,11 @@ public class SemanticChecker implements ASTVisitor {
         for (var def : it.DefList) {
             def.accept(this);
         }
+        it.mainFn.stmts = mainFunc.stmts;
+        it.mainFn.pos = mainFunc.pos;
     }
+
+    public void visit(MainFnNode it) {}
 
     public void visit(ClassDefNode it){
         currentScope = new classScope(currentScope, it.name);
