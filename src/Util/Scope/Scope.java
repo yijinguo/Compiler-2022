@@ -7,6 +7,7 @@ import AST.VarDefUnitNode;
 import AST.expr.ExprNode;
 import Util.Type;
 import Util.error.semanticError;
+import MIR.*;
 
 import java.util.HashMap;
 
@@ -14,7 +15,7 @@ public class Scope {
 
     public HashMap<String, VarDefUnitNode> variableMembers = new HashMap<>();
     public HashMap<String, FuncDefNode> functionMembers = new HashMap<>();
-
+    public HashMap<String, register> entities = new HashMap<>();
     public Scope parentScope;
 
     public boolean hasReturn = false;
@@ -92,11 +93,10 @@ public class Scope {
         return null;
     }
 
-    public Scope getCurrentScope(){
-        return this;
-    }
-
-    public Scope getParentScope(){
-        return parentScope;
+    public register getEntity(String name, boolean lookUpon) {
+        if (entities.containsKey(name)) return entities.get(name);
+        else if (parentScope != null && lookUpon)
+            return parentScope.getEntity(name, true);
+        return null;
     }
 }

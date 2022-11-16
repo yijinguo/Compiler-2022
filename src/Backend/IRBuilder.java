@@ -22,20 +22,32 @@ public class IRBuilder implements ASTVisitor {
         this.currentScope = gScope;
     }
 
-    public void visit(RootNode it){}
-    public void visit(MainFnNode it){}
+    public void visit(RootNode it){
+        it.mainFn.accept(this);
+    }
+    public void visit(MainFnNode it){
+        currentScope = new Scope(currentScope);
+        it.stmts.forEach(s -> s.accept(this));
+        currentScope = currentScope.parentScope;
+    }
     public void visit(ClassDefNode it){}
     public void visit(ClassBuildNode it){}
     public void visit(FuncDefNode it){}
     public void visit(ParameterListNode it){}
-    public void visit(VarDefNode it){}
-    public void visit(VarDefUnitNode it){}
+    public void visit(VarDefNode it){
+        for (VarDefUnitNode x : it.units) x.accept(this);
+    }
+    public void visit(VarDefUnitNode it){
+        currentScope.entities.put(it.varName, new register());
+    }
     public void visit(TypeNode it){}
 
     //public void visit(StmtNode it){}
     public void visit(BreakNode it){}
     public void visit(ContinueNode it){}
-    public void visit(ExprStmtNode it){}
+    public void visit(ExprStmtNode it){
+        it.exprNode.accept(this);
+    }
     public void visit(ForStmtNode it){}
     public void visit(IfStmtNode it){
         it.condition.accept(this);
