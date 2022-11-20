@@ -40,15 +40,28 @@ public class IRBuilder implements ASTVisitor {
     public void visit(VarDefUnitNode it){
         currentScope.entities.put(it.varName, new register());
     }
-    public void visit(TypeNode it){}
+    public void visit(TypeNode it){
+        //?
+        //todo
+    }
 
     //public void visit(StmtNode it){}
-    public void visit(BreakNode it){}
-    public void visit(ContinueNode it){}
+    public void visit(BreakNode it){
+        block destination = new block();
+        currentBlock.push_back(new jump(destination));
+        currentBlock = destination;
+        mainfn.blocks.add(destination);
+    }
+    public void visit(ContinueNode it){
+        //todo
+        //循环的结点要不要重复？还是jump out?
+    }
     public void visit(ExprStmtNode it){
         it.exprNode.accept(this);
     }
-    public void visit(ForStmtNode it){}
+    public void visit(ForStmtNode it){
+        //todo
+    }
     public void visit(IfStmtNode it){
         it.condition.accept(this);
         block trueBranch = new block(), falseBranch = new block();
@@ -71,9 +84,34 @@ public class IRBuilder implements ASTVisitor {
         mainfn.blocks.add(falseBranch);
         mainfn.blocks.add(destination);
     }
-    public void visit(ReturnStmtNode it){}
-    public void visit(SuiteNode it){}
-    public void visit(WhileStmtNode it){}
+    public void visit(ReturnStmtNode it){
+        entity value;
+        if (it.expr != null) {
+            it.expr.accept(this);
+            value = it.expr.val;
+        } else value = null;
+        currentBlock.push_back(new ret(value));
+    }
+    public void visit(SuiteNode it){
+        for (StmtNode x : it.stmts)
+            x.accept(this);
+    }
+    public void visit(WhileStmtNode it){
+        it.condition.accept(this);
+        block whileBlock = new block();
+        currentBlock.push_back(new whileLoop(it.condition.val, whileBlock));
+
+        block destination = new block();
+        currentBlock = whileBlock;
+        for (StmtNode x : it.stmts) {
+            x.accept(this);
+        }
+        currentBlock.push_back(new jump(destination));
+        currentBlock = destination;
+
+        mainfn.blocks.add(whileBlock);
+        mainfn.blocks.add(destination);
+    }
 
     //public void visit(ExprNode it){}
     public void visit(ArrayExprNode it){}

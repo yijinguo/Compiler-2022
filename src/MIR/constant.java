@@ -6,10 +6,10 @@ public class constant extends entity{
     public enum constantType{
         INT,BOOL,STRING,NULL
     }
-    constantType type;
-    int int_value;
-    boolean boolean_value;
-    String string_value;
+    public constantType type;
+    public int int_value;
+    public boolean boolean_value;
+    public String string_value;
 
     public constant(){
         super();
