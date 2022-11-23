@@ -1,6 +1,7 @@
 package MIR;
 
 import MIR.Statmemt.*;
+import MIR.terminalStmt.*;
 import Util.error.*;
 import Util.position;
 
@@ -10,8 +11,13 @@ import java.util.LinkedList;
 public class block {
     public LinkedList<statement> stmtList = new LinkedList<>();
     public terminalStmt tailStmt = null;
+    public block parentBlock = new block();
 
     public block(){}
+
+    public block(block parentBlock){
+        this.parentBlock = parentBlock;
+    }
 
     public void push_back(statement stmt){
         stmtList.add(stmt);

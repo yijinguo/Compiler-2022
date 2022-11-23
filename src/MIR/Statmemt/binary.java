@@ -22,24 +22,34 @@ public class binary extends statement{
             this.op1 = op2;
             this.op2 = op1;
             if (this.op1 instanceof constant) {
-                int i1 = ((constant) op1).int_value, i2 = ((constant) op2).int_value, i;
+                type i1 = ((constant) op1).getType(), i2 = ((constant) op2).getType(), i = new type(i1.irType);
                 switch (op) {
-                    case mul : i = i1 * i2; break;
-                    case div : i = i1 / i2; break;
-                    case mod : i = i1 % i2; break;
-                    case add : i = i1 + i2; break;
-                    case sub : i = i1 - i2; break;
-                    case lShift: i = i1 << i2; break;
-                    case rShift: i = i1 >> i2; break;
-                    case lThan: i = (i1 < i2) ? 1 : 0; break;
-                    case gThan: i = (i1 > i2) ? 1 : 0; break;
-                    case lEqual: i = (i1 <= i2) ? 1 : 0; break;
-                    case gEqual: i = (i1 >= i2) ? 1 : 0; break;
-                    case eEqual: i = (i1 == i2) ? 1 : 0; break;
-                    case nEqual: i = (i1 != i2) ? 1 : 0; break;
-                    case bAnd: 
+                    case mul -> i.int_value = i1.int_value * i2.int_value;
+                    case div -> i.int_value = i1.int_value / i2.int_value;
+                    case mod -> i.int_value = i1.int_value % i2.int_value;
+                    case add -> i.int_value = i1.int_value + i2.int_value;
+                    case sub -> i.int_value = i1.int_value - i2.int_value;
+                    case lShift -> i.int_value = i1.int_value << i2.int_value;
+                    case rShift -> i.int_value = i1.int_value >> i2.int_value;
+                    case lThan -> i.int_value = (i1.int_value < i2.int_value) ? 1 : 0;
+                    case gThan -> i.int_value = (i1.int_value > i2.int_value) ? 1 : 0;
+                    case lEqual -> i.int_value = (i1.int_value <= i2.int_value) ? 1 : 0;
+                    case gEqual -> i.int_value = (i1.int_value >= i2.int_value) ? 1 : 0;
+                    case eEqual -> i.int_value = (i1.int_value == i2.int_value) ? 1 : 0;
+                    case nEqual -> i.int_value = (i1.int_value != i2.int_value) ? 1 : 0;
+                    case bAnd -> i.int_value = i1.int_value & i2.int_value;
+                    case bXor -> i.int_value = i1.int_value ^ i2.int_value;
+                    case bOr -> i.int_value = i1.int_value | i2.int_value;
+                    case lAnd -> i.boolean_value = i1.boolean_value && i2.boolean_value;
+                    case lOr -> i.boolean_value = i1.boolean_value || i2.boolean_value;
+                    default -> {
+                    }
                 }
-
+                this.op2 = new constant(i);
+                type zero = new type(type.IRType.INT);
+                zero.int_value = 0;
+                this.op1 = new constant(zero);
+                // Now, op1 is either register or zero
             }
         }
 

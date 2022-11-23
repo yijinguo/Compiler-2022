@@ -3,10 +3,10 @@ package Backend;
 import AST.*;
 import AST.expr.*;
 import AST.stmt.*;
+import MIR.terminalStmt.*;
 import Util.Scope.*;
 
 import MIR.*;
-import MIR.Statmemt.*;
 
 public class IRBuilder implements ASTVisitor {
 
@@ -38,7 +38,7 @@ public class IRBuilder implements ASTVisitor {
         for (VarDefUnitNode x : it.units) x.accept(this);
     }
     public void visit(VarDefUnitNode it){
-        currentScope.entities.put(it.varName, new register());
+        currentScope.entities.put(it.varName, new register(it.type.type));
     }
     public void visit(TypeNode it){
         //?
@@ -47,37 +47,66 @@ public class IRBuilder implements ASTVisitor {
 
     //public void visit(StmtNode it){}
     public void visit(BreakNode it){
-        block destination = new block();
+        block destination = new block(currentBlock);
         currentBlock.push_back(new jump(destination));
-        currentBlock = destination;
-        mainfn.blocks.add(destination);
     }
     public void visit(ContinueNode it){
-        //todo
-        //循环的结点要不要重复？还是jump out?
+        block tmp = currentBlock;
+        while (!(tmp.tailStmt instanceof whileLoop)){
+            tmp = tmp.parentBlock;
+        }
+        currentBlock.push_back(tmp.tailStmt);
     }
     public void visit(ExprStmtNode it){
         it.exprNode.accept(this);
     }
     public void visit(ForStmtNode it){
         //todo
+        //注意break，continue
+        block start = new block(currentBlock), forBlock = new block(currentBlock);
+        currentBlock.push_back(new forLoop(start, forBlock));
+
+        currentBlock = start;
+        if (it.varDef != null) it.varDef.accept(this);
+        else if (it.init != null) it.init.accept(this);
+        if (it.condition != null) it.condition.accept(this);
+        if (it.step != null) it.step.accept(this);
+
+        currentBlock = forBlock;
+        for (StmtNode x : it.stmts) {
+            x.accept(this);
+        }
+
+        block destination;
+        if (currentBlock.tailStmt instanceof jump) {
+            //have breakStmt
+            destination = ((jump) currentBlock.tailStmt).destination;
+        } else {
+            destination = new block(currentBlock);
+            currentBlock.push_back(new jump(destination));
+        }
+
+        currentBlock = destination;
+        mainfn.blocks.add(start);
+        mainfn.blocks.add(forBlock);
+        mainfn.blocks.add(destination);
     }
     public void visit(IfStmtNode it){
         it.condition.accept(this);
-        block trueBranch = new block(), falseBranch = new block();
+        block trueBranch = new block(currentBlock), falseBranch = new block(currentBlock);
         currentBlock.push_back(new branch(it.condition.val,trueBranch,falseBranch));
 
-        block destination = new block();
+        block destination = new block(currentBlock);
         currentBlock = trueBranch;
         for (StmtNode x : it.thenStmts) {
             x.accept(this);
         }
-        currentBlock.push_back(new jump(destination));
+        if (currentBlock.tailStmt == null) currentBlock.push_back(new jump(destination));
         currentBlock = falseBranch;
         for (StmtNode x : it.elseStmts) {
             x.accept(this);
         }
-        currentBlock.push_back(new jump(destination));
+        if (currentBlock.tailStmt == null) currentBlock.push_back(new jump(destination));
         currentBlock = destination;
 
         mainfn.blocks.add(trueBranch);
@@ -97,18 +126,29 @@ public class IRBuilder implements ASTVisitor {
             x.accept(this);
     }
     public void visit(WhileStmtNode it){
-        it.condition.accept(this);
-        block whileBlock = new block();
-        currentBlock.push_back(new whileLoop(it.condition.val, whileBlock));
+        block condition = new block(currentBlock), whileBlock = new block(currentBlock);
+        currentBlock.push_back(new whileLoop(condition, whileBlock));
 
-        block destination = new block();
+        currentBlock = condition;
+        it.condition.accept(this);
+        currentBlock.push_back(new jump(whileBlock));
+
         currentBlock = whileBlock;
         for (StmtNode x : it.stmts) {
             x.accept(this);
         }
-        currentBlock.push_back(new jump(destination));
+
+        block destination;
+        if (currentBlock.tailStmt instanceof jump) {
+            //have breakStmt
+            destination = ((jump) currentBlock.tailStmt).destination;
+        } else {
+            destination = new block(currentBlock);
+            currentBlock.push_back(new jump(destination));
+        }
         currentBlock = destination;
 
+        mainfn.blocks.add(condition);
         mainfn.blocks.add(whileBlock);
         mainfn.blocks.add(destination);
     }
