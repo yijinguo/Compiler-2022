@@ -7,6 +7,7 @@ public class type {
         INT,BOOL,STRING,NULL,ClassType
     }
     public IRType irType;
+    public int dim = 0;
     public int int_value;
     public boolean boolean_value;
     public String string_value;
@@ -29,6 +30,7 @@ public class type {
             this.irType = IRType.ClassType;
             this.class_name = type.typeName;
         }
+        this.dim = type.dim;
     }
 
 }

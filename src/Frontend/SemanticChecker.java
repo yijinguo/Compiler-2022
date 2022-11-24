@@ -259,7 +259,6 @@ public class SemanticChecker implements ASTVisitor {
             }
         } else {
             if (!it.lhs.type.isArray && !it.lhs.type.isClass) {
-                //todo  赋值表达式什么类型可以等于null？
                 throw new syntaxError("Unmatched AssignType", it.pos);
             }
         }
@@ -273,6 +272,7 @@ public class SemanticChecker implements ASTVisitor {
             if (var == null && func == null && classDef == null) {
                 if (it.type == null)
                     throw new semanticError("Undefined AtomExpr", it.pos);
+                it.type.isConst = true;
             }
             if (var != null) {
                 it.type = var.type.type;

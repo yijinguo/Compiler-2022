@@ -7,6 +7,7 @@ import MIR.terminalStmt.*;
 import Util.Scope.*;
 
 import MIR.*;
+import MIR.Statmemt.*;
 
 public class IRBuilder implements ASTVisitor {
 
@@ -156,13 +157,68 @@ public class IRBuilder implements ASTVisitor {
     //public void visit(ExprNode it){}
     public void visit(ArrayExprNode it){}
     public void visit(AssignExprNode it){}
-    public void visit(AtomExprNode it){}
-    public void visit(BinaryExprNode it){}
-    public void visit(ExprListNode it){}
+    public void visit(AtomExprNode it){
+        //it.val
+        it.val = new entity();
+        if (!it.str.equals("this")) {
+             if (it.type.isConst) { //处理常数
+                it.val = new constant();
+                switch (it.type.typeName) {
+                    case "int" -> {
+                        it.val.irType.irType = type.IRType.INT;
+                        it.val.irType.int_value = Integer.parseInt(it.str);
+                    }
+                    case "bool" -> {
+                        it.val.irType.irType = type.IRType.BOOL;
+                        it.val.irType.boolean_value = it.str.equals("true");
+                    }
+                    case "string" -> {
+                        it.val.irType.irType = type.IRType.STRING;
+                        it.val.irType.string_value = it.str;
+                    }
+                    case "null" -> it.val.irType.irType = type.IRType.NULL;
+                    default -> {
+
+                    }
+                }
+            } else { //ID,处理变量
+                 it.val = currentScope.getEntity(it.str);
+            }
+        } else {
+
+        }
+    }
+    public void visit(BinaryExprNode it){
+        it.lhs.accept(this);
+        it.rhs.accept(this);
+        register value;
+        if (it.val != null) {
+            value = ((register)it.val);
+        } else {
+            value = new register();
+            it.val = value;
+        }
+        currentBlock.push_back(new binary(value,it.lhs.val, it.rhs.val,it.op));
+    }
+    public void visit(ExprListNode it){
+        for (ExprNode x : it.exprs) {
+            x.accept(this);
+        }
+    }
     public void visit(FuncExprNode it){}
     public void visit(LambdaExprNode it){}
     public void visit(MemberExprNode it){}
     public void visit(NewExprNode it){}
     public void visit(PreAddExprNode it){}
-    public void visit(UnaryExprNode it){}
+    public void visit(UnaryExprNode it){
+        it.expr.accept(this);
+        register value;
+        if (it.val != null) {
+            value = (register) it.val;
+        } else {
+            value = new register();
+            it.val = value;
+        }
+        currentBlock.push_back(new unary(value,it.val, it.op));
+    }
 }

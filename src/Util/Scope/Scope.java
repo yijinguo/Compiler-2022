@@ -93,10 +93,12 @@ public class Scope {
         return null;
     }
 
-    public register getEntity(String name, boolean lookUpon) {
-        if (entities.containsKey(name)) return entities.get(name);
-        else if (parentScope != null && lookUpon)
-            return parentScope.getEntity(name, true);
+    public register getEntity(String name) {
+        Scope tmp = this;
+        while (tmp != null) {
+            if (tmp.entities.containsKey(name)) return entities.get(name);
+            tmp = tmp.parentScope;
+        }
         return null;
     }
 }

@@ -7,6 +7,7 @@ public class Type {
     public String typeName;
     public boolean isClass = false;
     public boolean isArray = false;
+    public boolean isConst = false;
     public int dim = 0;
 
     public ClassDefNode classDecl = null;
