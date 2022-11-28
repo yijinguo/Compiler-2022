@@ -8,43 +8,87 @@ import Util.Scope.*;
 
 import MIR.*;
 import MIR.Statmemt.*;
+import Util.Type;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class IRBuilder implements ASTVisitor {
 
-    public block currentBlock;
-    public mainFn mainfn;
-    public Scope currentScope;
+    //对每个函数开一个rootBlock。
+    //对每一个类开一个结点。
+    private block currentBlock = null;
+    private function currentFunc = null;
+    private classVar currentClass = null;
+    public HashMap<String, function> functions = new HashMap<>();
+    public HashMap<String, classVar> classLists =  new HashMap<>();
     public globalScope gScope;
 
-    public IRBuilder(mainFn mainfn, globalScope gScope){
-        this.mainfn = mainfn;
+    public IRBuilder(/*mainFn mainfn, */globalScope gScope){
         this.gScope = gScope;
-        this.currentBlock = mainfn.rootBlock;
-        this.currentScope = gScope;
+        //this.currentScope = gScope;
     }
 
     public void visit(RootNode it){
-        it.mainFn.accept(this);
+        for (ASTNode x : it.DefList) {
+            x.accept(this);
+        }
     }
     public void visit(MainFnNode it){
-        currentScope = new Scope(currentScope);
+        //currentScope = new Scope(currentScope);
         it.stmts.forEach(s -> s.accept(this));
-        currentScope = currentScope.parentScope;
+        //currentScope = currentScope.parentScope;
     }
-    public void visit(ClassDefNode it){}
-    public void visit(ClassBuildNode it){}
-    public void visit(FuncDefNode it){}
-    public void visit(ParameterListNode it){}
+    public void visit(ClassDefNode it){
+        currentClass = new classVar(it.name);
+        if (it.classBuilder != null) it.classBuilder.accept(this);
+        it.varList.forEach(x->x.accept(this));
+        it.funcList.forEach(x->x.accept(this));
+        classLists.put(currentClass.className, currentClass);
+        currentClass = null;
+    }
+    public void visit(ClassBuildNode it){
+        currentFunc = new function(new type(new Type("void")), it.name);
+        //currentScope = new funcScope(currentScope);
+        it.suites.accept(this);
+        //currentScope = currentScope.parentScope;
+        currentFunc = null;
+    }
+    public void visit(FuncDefNode it){
+        currentFunc = new function(new type(it.returnType.type), it.funcName);
+        currentBlock = currentFunc.rootBlock;
+        it.params.accept(this);
+        it.stmts.forEach(x -> x.accept(this));
+        if (currentClass == null)
+            functions.put(currentFunc.funcName ,currentFunc);
+        else
+            currentClass.functions.put(currentFunc.funcName, currentFunc);
+        currentFunc = null;
+    }
+    public void visit(ParameterListNode it){
+        for (VarDefUnitNode x : it.varList) {
+            register reg_x = new register(x.type.type);
+            currentFunc.paraList.put(x.varName, reg_x);
+            currentBlock.entities.put(x.varName, reg_x);
+        }
+    }
     public void visit(VarDefNode it){
-        for (VarDefUnitNode x : it.units) x.accept(this);
+        it.units.forEach(x->x.accept(this));
     }
     public void visit(VarDefUnitNode it){
-        currentScope.entities.put(it.varName, new register(it.type.type));
+        register var = new register(it.type.type);
+        var.irType.dim = it.type.type.dim;
+        if (currentBlock != null) {
+            currentBlock.entities.put(it.varName, var);
+        } else if (currentClass != null) {
+            var.isInClass = true;
+            var.className = currentClass.className;
+            currentClass.entities.put(it.varName, var);
+        } else {
+            gScope.entities.put(it.varName, var);
+        }
     }
-    public void visit(TypeNode it){
-        //?
-        //todo
-    }
+    public void visit(TypeNode it){}
 
     //public void visit(StmtNode it){}
     public void visit(BreakNode it){
@@ -62,11 +106,10 @@ public class IRBuilder implements ASTVisitor {
         it.exprNode.accept(this);
     }
     public void visit(ForStmtNode it){
-        //todo
-        //注意break，continue
         block start = new block(currentBlock), forBlock = new block(currentBlock);
         currentBlock.push_back(new forLoop(start, forBlock));
 
+        //currentScope = new Scope(currentScope);
         currentBlock = start;
         if (it.varDef != null) it.varDef.accept(this);
         else if (it.init != null) it.init.accept(this);
@@ -77,6 +120,7 @@ public class IRBuilder implements ASTVisitor {
         for (StmtNode x : it.stmts) {
             x.accept(this);
         }
+        //currentScope = currentScope.parentScope;
 
         block destination;
         if (currentBlock.tailStmt instanceof jump) {
@@ -88,9 +132,9 @@ public class IRBuilder implements ASTVisitor {
         }
 
         currentBlock = destination;
-        mainfn.blocks.add(start);
-        mainfn.blocks.add(forBlock);
-        mainfn.blocks.add(destination);
+        currentFunc.blocks.add(start);
+        currentFunc.blocks.add(forBlock);
+        currentFunc.blocks.add(destination);
     }
     public void visit(IfStmtNode it){
         it.condition.accept(this);
@@ -99,20 +143,26 @@ public class IRBuilder implements ASTVisitor {
 
         block destination = new block(currentBlock);
         currentBlock = trueBranch;
+        //currentScope = new Scope(currentScope);
         for (StmtNode x : it.thenStmts) {
             x.accept(this);
         }
+        //currentScope = currentScope.parentScope;
         if (currentBlock.tailStmt == null) currentBlock.push_back(new jump(destination));
+
+        //currentScope = new Scope(currentScope);
         currentBlock = falseBranch;
         for (StmtNode x : it.elseStmts) {
             x.accept(this);
         }
+        //currentScope = currentScope.parentScope;
         if (currentBlock.tailStmt == null) currentBlock.push_back(new jump(destination));
+
         currentBlock = destination;
 
-        mainfn.blocks.add(trueBranch);
-        mainfn.blocks.add(falseBranch);
-        mainfn.blocks.add(destination);
+        currentFunc.blocks.add(trueBranch);
+        currentFunc.blocks.add(falseBranch);
+        currentFunc.blocks.add(destination);
     }
     public void visit(ReturnStmtNode it){
         entity value;
@@ -121,6 +171,7 @@ public class IRBuilder implements ASTVisitor {
             value = it.expr.val;
         } else value = null;
         currentBlock.push_back(new ret(value));
+        currentBlock = null;
     }
     public void visit(SuiteNode it){
         for (StmtNode x : it.stmts)
@@ -130,6 +181,7 @@ public class IRBuilder implements ASTVisitor {
         block condition = new block(currentBlock), whileBlock = new block(currentBlock);
         currentBlock.push_back(new whileLoop(condition, whileBlock));
 
+        //currentScope = new Scope(currentScope);
         currentBlock = condition;
         it.condition.accept(this);
         currentBlock.push_back(new jump(whileBlock));
@@ -138,6 +190,7 @@ public class IRBuilder implements ASTVisitor {
         for (StmtNode x : it.stmts) {
             x.accept(this);
         }
+        //currentScope = currentScope.parentScope;
 
         block destination;
         if (currentBlock.tailStmt instanceof jump) {
@@ -149,17 +202,24 @@ public class IRBuilder implements ASTVisitor {
         }
         currentBlock = destination;
 
-        mainfn.blocks.add(condition);
-        mainfn.blocks.add(whileBlock);
-        mainfn.blocks.add(destination);
+        currentFunc.blocks.add(condition);
+        currentFunc.blocks.add(whileBlock);
+        currentFunc.blocks.add(destination);
     }
 
     //public void visit(ExprNode it){}
-    public void visit(ArrayExprNode it){}
-    public void visit(AssignExprNode it){}
+    public void visit(ArrayExprNode it){
+        it.arrayName.accept(this);
+        it.index.accept(this);
+        it.val = new register(it.type);
+        currentBlock.push_back(new array(it.arrayName.val, it.index.val));
+    }
+    public void visit(AssignExprNode it){
+        it.lhs.accept(this);
+        it.rhs.accept(this);
+        currentBlock.push_back(new assign(it.lhs.val, it.rhs.val));
+    }
     public void visit(AtomExprNode it){
-        //it.val
-        it.val = new entity();
         if (!it.str.equals("this")) {
              if (it.type.isConst) { //处理常数
                 it.val = new constant();
@@ -181,11 +241,19 @@ public class IRBuilder implements ASTVisitor {
 
                     }
                 }
-            } else { //ID,处理变量
-                 it.val = currentScope.getEntity(it.str);
+            } else {
+                 if (currentBlock != null)
+                     it.val = currentBlock.getEntity(it.str);
+                 if (it.val == null) {
+                     if (currentClass != null)
+                         it.val = currentClass.getEntity(it.str);
+                     if (it.val == null)
+                         it.val = gScope.getEntity(it.str);
+                 }
+                 it.val.irType.dim = it.type.dim;
             }
-        } else {
-
+        } else { //"this"
+            it.val = new register(it.type);
         }
     }
     public void visit(BinaryExprNode it){
@@ -198,18 +266,59 @@ public class IRBuilder implements ASTVisitor {
             value = new register();
             it.val = value;
         }
-        currentBlock.push_back(new binary(value,it.lhs.val, it.rhs.val,it.op));
+        currentBlock.push_back(new binary(value, it.lhs.val, it.rhs.val, it.op));
+        it.val = value;
     }
     public void visit(ExprListNode it){
         for (ExprNode x : it.exprs) {
             x.accept(this);
         }
     }
-    public void visit(FuncExprNode it){}
+    public void visit(FuncExprNode it){
+        //it.funcName.accept(this);
+        call callFunc;
+        if (it.funcName instanceof MemberExprNode) {
+            callFunc = new call(new type(it.type), ((MemberExprNode)it.funcName).member, ((MemberExprNode)it.funcName).name.str);
+        } else {
+            callFunc = new call(new type(it.type), it.funcName.str);
+        }
+        for (ExprNode x : it.lists.exprs) {
+            x.accept(this);
+            callFunc.paramList.add(x.val);
+        }
+        currentBlock.push_back(callFunc);
+        it.val = callFunc.returnReg;
+    }
     public void visit(LambdaExprNode it){}
-    public void visit(MemberExprNode it){}
-    public void visit(NewExprNode it){}
-    public void visit(PreAddExprNode it){}
+    public void visit(MemberExprNode it){ //函数调用不跑这个函数，只涉及变量调用
+        it.name.accept(this);
+        if (it.name.str.equals("this")) {
+            it.val = currentClass.getEntity(it.member);
+        } else {
+            it.val = classLists.get(it.name.str).getEntity(it.member);
+        }
+    }
+    public void visit(NewExprNode it){
+        newExpr newE = new newExpr(it.typeName, it.dim);
+        for (ExprNode x : it.sizeList){
+            x.accept(this);
+            newE.sizeList.add(x.val);
+        }
+        currentBlock.push_back(newE);
+
+    }
+    public void visit(PreAddExprNode it){
+        it.expr.accept(this);
+        register value;
+        if (it.val != null) {
+            value = (register) it.val;
+        } else {
+            value = new register();
+            it.val = value;
+        }
+        currentBlock.push_back(new preAdd(value, it.op, it.val));
+        it.val = value;
+    }
     public void visit(UnaryExprNode it){
         it.expr.accept(this);
         register value;
@@ -219,6 +328,7 @@ public class IRBuilder implements ASTVisitor {
             value = new register();
             it.val = value;
         }
-        currentBlock.push_back(new unary(value,it.val, it.op));
+        currentBlock.push_back(new unary(value, it.val, it.op));
+        it.val = value;
     }
 }

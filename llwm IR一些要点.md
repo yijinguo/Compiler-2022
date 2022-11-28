@@ -1,6 +1,6 @@
 From:[Evian-Zhang/llvm-ir-tutorial: LLVM IR入门指南 (github.com)](https://github.com/Evian-Zhang/llvm-ir-tutorial)
 
-
+[TOC]
 
 我们写编译器的最终目的，是将源代码交给LLVM后端处理，让LLVM后端帮我们优化，并编译到相应的平台。而LLVM后端为我们提供的中介，就是LLVM IR。我们只需要将内存中的AST转化为LLVM IR就可以放手不管了，接下来的所有事都是LLVM后端帮我们实现。
 
@@ -242,7 +242,7 @@ for (int i = 0; i < 4; i++) {
 	br label %start
 start:
 	%i_value = load i32, i32* %i
-	%comparison_result = icmp slt i32 %i_value, 4 ; test if i < 4
+	%comparison_result = icmp slt i32 %i_value, 4 ; test if i < 4=
 	br i1 %comparison_result, label %A, label %B
 A:
 	; do something A
@@ -253,3 +253,131 @@ B:
 	; do something B
 ```
 
+#### 属性
+
+最后，还有一种叫做属性的概念。属性并不是类型，其一般用于函数。比如说，告诉编译器这个函数不会抛出错误，不需要某些优化等等。我们可以看到
+
+```
+define void @foo() nounwind {
+	; ...
+}
+```
+
+这里`nounwind`就是一个属性。
+
+有时候，一个函数的属性会特别特别多，并且有多个函数都有相同的属性。那么，就会有大量重复的篇幅用来给每一个函数说明属性。因此，LLVM IR引入了属性组的概念，我们在将一个简单的C程序编译成LLVM IR时，会发现代码中有
+
+```
+attributes #0 = { noinline nounwind optnone ssp uwtable "correctly-rounded-divide-sqrt-fp-math"="false" "darwin-stkchk-strong-link" "disable-tail-calls"="false" "frame-pointer"="all" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "probe-stack"="___chkstk_darwin" "stack-protector-buffer-size"="8" "target-cpu"="penryn" "target-features"="+cx16,+cx8,+fxsr,+mmx,+sahf,+sse,+sse2,+sse3,+sse4.1,+ssse3,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
+```
+
+这种一大长串的，就是属性组。属性组总是以`#`开头。当我们函数需要它的时候，只需要
+
+```
+define void @foo #0 {
+	; ...
+}
+```
+
+直接使用`#0`即可。
+
+
+
+## 函数
+
+### 函数定义
+
+例子：
+
+```
+define i32 @foo(i32 %a, i64 %b) {
+	ret i32 0
+}
+```
+
+### 函数调用
+
+使用`call`指令可以像高级语言那样直接调用函数。我们来仔细分析一下这里做了哪几件事：
+
+- 传递参数
+- 执行函数
+- 获得返回值
+
+例子
+
+```
+define i32 @foo(i32 %a) {
+	; ...
+}
+
+define void @bar() {
+	%1 = call i32 @foo(i32 1)
+}
+```
+
+#### 执行函数
+
+1. 把函数返回地址压栈
+2. 跳转到相应函数的地址
+
+#### 传递参数和获得返回值
+
+谈到这两点，就不得不说调用约定了。我们知道，在汇编语言中，是没有参数传递和返回值的概念的，有的仅仅是让当前的控制流跳转到指定函数执行。所以，一切的参数传递和返回值都需要我们人为约定。也就是说，我们需要约定两件事：
+
+- 被调用的函数希望知道参数是放在哪里的
+- 调用者希望知道调用函数的返回值是放在哪里的
+
+这就是调用约定。不同的调用约定会产生不同的特效，也就产生了许多高级语言的feature。
+
+**C调用约定**
+
+最广泛使用的调用约定是C调用约定，也就是各个操作系统的标准库使用的调用约定。在x86_64架构下，C调用约定是System V版本的，所有参数按顺序放入指定寄存器，如果寄存器不够，剩余的则从右往左顺序压栈。而返回值则是按先后顺序放入寄存器或者放入调用者分配的空间中，如果只有一个返回值，那么就会放在`rax`里。
+
+在LLVM IR中，函数的调用默认使用C调用约定。为了验证，我们可以写一个简单的程序：
+
+```
+; calling_convention_test.ll
+%ReturnType = type { i32, i32 }
+define %ReturnType @foo(i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6, i32 %a7, i32 %a8) {
+	ret %ReturnType { i32 1, i32 2 }
+}
+
+define i32 @main() {
+	%1 = call %ReturnType @foo(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8)
+	ret i32 0
+}
+```
+
+我们在x86_64架构的macOS上查看其编译出来的汇编代码。在`main`函数中，参数传递是：
+
+```
+movl	$1, %edi
+movl	$2, %esi
+movl	$3, %edx
+movl	$4, %ecx
+movl	$5, %r8d
+movl	$6, %r9d
+movl	$7, (%rsp)
+movl	$8, 8(%rsp)
+callq	_foo
+```
+
+而在`foo`函数内部，返回值传递是：
+
+```
+movl	$1, %eax
+movl	$2, %edx
+retq
+```
+
+如果大家去查阅System V的指南的话，会发现完全符合。
+
+这种System V的调用约定有什么好处呢？其最大的特点在于，当寄存器数量不够时，剩余的参数是按**从右向左**的顺序压栈。这就让基于这种调用约定的高级语言可以更轻松地实现可变参数的feature。所谓可变参数，最典型的例子就是C语言中的`printf`：
+
+```
+printf("%d %d %d %d", a, b, c, d);
+```
+
+`printf`可以接受任意数量的参数，其参数的数量是由第一个参数`"%d %d %d %d"`决定的。有多少个需要格式化的变量，接下来就还有多少个参数。
+
+那么，System V的调用约定又是为什么能满足这样的需求呢？假设我们不考虑之前传入寄存器内的参数，只考虑压入栈内的参数。那么，如果是从右往左的顺序压栈，栈顶就是`"%d %d %d %d"`的地址，接着依次是`a`, `b`, `c`, `d`。那么，我们的程序就可以先读栈顶，获得字符串，然后确定有多少个参数，接着就继续在栈上读多少个参数。相反，如果是从左往右顺序压栈，那么程序第一个读到的是`d`，程序也不知道该读多少个参数。

@@ -3,6 +3,10 @@ package MIR;
 import Util.Type;
 
 public class register extends entity{
+
+    public boolean isInClass = false;
+    public String className = null;
+
     public register(){
         super();
     }

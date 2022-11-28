@@ -6,10 +6,12 @@ import Util.error.*;
 import Util.position;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 public class block {
     public LinkedList<statement> stmtList = new LinkedList<>();
+    public HashMap<String, entity> entities = new HashMap<>();
     public terminalStmt tailStmt = null;
     public block parentBlock = new block();
 
@@ -44,6 +46,16 @@ public class block {
             ret.add(((jump) tailStmt).destination);
         }
         return ret;
+    }
+
+    public entity getEntity(String name){
+        block tmp = this;
+        while (tmp != null) {
+            if (tmp.entities.containsKey(name))
+                return tmp.entities.get(name);
+            tmp = tmp.parentBlock;
+        }
+        return null;
     }
 
 }

@@ -2,17 +2,15 @@ package MIR.Statmemt;
 
 import MIR.*;
 
-public class unary extends statement{
-
+public class preAdd extends statement{
+    public String op;
     public register re;
     public entity v;
-    public String op;
 
-    public unary(register re, entity v, String op){
+    public preAdd(register re, String op, entity v){
         super();
         this.re = re;
-        this.v = v;
         this.op = op;
+        this.v = v;
     }
-
 }
