@@ -1,5 +1,7 @@
 From:[Evian-Zhang/llvm-ir-tutorial: LLVM IR入门指南 (github.com)](https://github.com/Evian-Zhang/llvm-ir-tutorial)
 
+官方文档：[About — LLVM 16.0.0git documentation](https://llvm.org/docs/)
+
 [TOC]
 
 我们写编译器的最终目的，是将源代码交给LLVM后端处理，让LLVM后端帮我们优化，并编译到相应的平台。而LLVM后端为我们提供的中介，就是LLVM IR。我们只需要将内存中的AST转化为LLVM IR就可以放手不管了，接下来的所有事都是LLVM后端帮我们实现。

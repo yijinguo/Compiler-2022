@@ -48,14 +48,14 @@ public class IRBuilder implements ASTVisitor {
         currentClass = null;
     }
     public void visit(ClassBuildNode it){
-        currentFunc = new function(new type(new Type("void")), it.name);
+        currentFunc = new function("void", it.name);
         //currentScope = new funcScope(currentScope);
         it.suites.accept(this);
         //currentScope = currentScope.parentScope;
         currentFunc = null;
     }
     public void visit(FuncDefNode it){
-        currentFunc = new function(new type(it.returnType.type), it.funcName);
+        currentFunc = new function(it.returnType.type.typeName, it.funcName);
         currentBlock = currentFunc.rootBlock;
         it.params.accept(this);
         it.stmts.forEach(x -> x.accept(this));
@@ -67,7 +67,7 @@ public class IRBuilder implements ASTVisitor {
     }
     public void visit(ParameterListNode it){
         for (VarDefUnitNode x : it.varList) {
-            register reg_x = new register(x.type.type);
+            register reg_x = new register(x.varName, x.type.type);
             currentFunc.paraList.put(x.varName, reg_x);
             currentBlock.entities.put(x.varName, reg_x);
         }
@@ -76,10 +76,18 @@ public class IRBuilder implements ASTVisitor {
         it.units.forEach(x->x.accept(this));
     }
     public void visit(VarDefUnitNode it){
-        register var = new register(it.type.type);
+        varDef varDefUnit;
+        register var = new register(it.varName, it.type.type);
         var.irType.dim = it.type.type.dim;
+        if (it.init != null) {
+            it.init.accept(this);
+            varDefUnit = new varDef(var, it.init.val);
+        } else {
+            varDefUnit = new varDef(var);
+        }
         if (currentBlock != null) {
             currentBlock.entities.put(it.varName, var);
+            currentBlock.push_back(varDefUnit);
         } else if (currentClass != null) {
             var.isInClass = true;
             var.className = currentClass.className;
@@ -87,6 +95,7 @@ public class IRBuilder implements ASTVisitor {
         } else {
             gScope.entities.put(it.varName, var);
         }
+
     }
     public void visit(TypeNode it){}
 
@@ -211,7 +220,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(ArrayExprNode it){
         it.arrayName.accept(this);
         it.index.accept(this);
-        it.val = new register(it.type);
+        it.val = new register(it.arrayName.str, it.type);
         currentBlock.push_back(new array(it.arrayName.val, it.index.val));
     }
     public void visit(AssignExprNode it){
@@ -253,7 +262,8 @@ public class IRBuilder implements ASTVisitor {
                  it.val.irType.dim = it.type.dim;
             }
         } else { //"this"
-            it.val = new register(it.type);
+            //todo
+            it.val = new register("this", it.type);
         }
     }
     public void visit(BinaryExprNode it){
