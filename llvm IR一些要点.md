@@ -2,6 +2,8 @@ From:[Evian-Zhang/llvm-ir-tutorial: LLVM IR入门指南 (github.com)](https://gi
 
 官方文档：[About — LLVM 16.0.0git documentation](https://llvm.org/docs/)
 
+Yx：[ZYHowell/Yx at 1c1a74e8e636cf64d2e6f73975cfb2cf50f69cca (github.com)](https://github.com/ZYHowell/Yx/tree/1c1a74e8e636cf64d2e6f73975cfb2cf50f69cca)
+
 [TOC]
 
 我们写编译器的最终目的，是将源代码交给LLVM后端处理，让LLVM后端帮我们优化，并编译到相应的平台。而LLVM后端为我们提供的中介，就是LLVM IR。我们只需要将内存中的AST转化为LLVM IR就可以放手不管了，接下来的所有事都是LLVM后端帮我们实现。
@@ -383,3 +385,9 @@ printf("%d %d %d %d", a, b, c, d);
 `printf`可以接受任意数量的参数，其参数的数量是由第一个参数`"%d %d %d %d"`决定的。有多少个需要格式化的变量，接下来就还有多少个参数。
 
 那么，System V的调用约定又是为什么能满足这样的需求呢？假设我们不考虑之前传入寄存器内的参数，只考虑压入栈内的参数。那么，如果是从右往左的顺序压栈，栈顶就是`"%d %d %d %d"`的地址，接着依次是`a`, `b`, `c`, `d`。那么，我们的程序就可以先读栈顶，获得字符串，然后确定有多少个参数，接着就继续在栈上读多少个参数。相反，如果是从左往右顺序压栈，那么程序第一个读到的是`d`，程序也不知道该读多少个参数。
+
+
+
+
+
+![image-20221203150019942](C:\Users\guoyijin-繁花似锦\AppData\Roaming\Typora\typora-user-images\image-20221203150019942.png)
