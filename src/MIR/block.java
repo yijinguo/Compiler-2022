@@ -8,12 +8,15 @@ import Util.position;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 public class block {
     public LinkedList<statement> stmtList = new LinkedList<>();
     public HashMap<String, entity> entities = new HashMap<>();
+    public HashMap<String, Integer> entities_reg = new HashMap<>();
     public terminalStmt tailStmt = null;
     public block parentBlock = new block();
+    public boolean have_alloca_reg = false;
 
     public block(){}
 
@@ -56,6 +59,21 @@ public class block {
             tmp = tmp.parentBlock;
         }
         return null;
+    }
+
+    public void alloca_reg(){
+        if (have_alloca_reg) return;
+        have_alloca_reg = true;
+        int t = 0;
+        for (Map.Entry<String, entity> entry : entities.entrySet()) {
+            t++;
+            entities_reg.put(entry.getKey(),t);
+        }
+    }
+
+    public int getRegister(String name){
+        alloca_reg();
+        return entities_reg.get(name);
     }
 
 }
