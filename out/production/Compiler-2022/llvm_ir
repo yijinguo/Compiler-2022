@@ -1,0 +1,8 @@
+@"hehe\n" = global [8 x i8] c""hehe\n"\00"
+define void @haha() {
+%1 = alloca 
+0:
+	ret void
+}define i32 @main() {
+0:
+	%1 = load i8* getelementptr ([8 x i8], [8 xi8]* @"hehe\n", i32 0, i32 0

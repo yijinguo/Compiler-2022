@@ -1,4 +1,6 @@
 import AST.RootNode;
+import Backend.IRBuilder;
+import Backend.IRPrinter;
 import Frontend.ASTBuilder;
 import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
@@ -9,7 +11,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 
 import grammar.*;
 
@@ -17,8 +21,8 @@ public class Compiler {
 
     public static void main(String[] args) throws Exception{
         String name="src/testcase.mx";
-        //InputStream input=new FileInputStream(name);
-        InputStream input = System.in;
+        InputStream input=new FileInputStream(name);
+        //InputStream input = System.in;
         try {
             RootNode root;
             globalScope GlobalScope=new globalScope(null);
@@ -33,6 +37,7 @@ public class Compiler {
             parser.addErrorListener(new MxErrorListener());
 
             ParseTree parseTreeRoot=parser.program();
+
             ASTBuilder astBuilder=new ASTBuilder(GlobalScope);
             root=(RootNode) astBuilder.visit(parseTreeRoot);
             SymbolCollector symbolCollector=new SymbolCollector(GlobalScope);
@@ -40,6 +45,14 @@ public class Compiler {
 
             SemanticChecker semanticChecker=new SemanticChecker(GlobalScope);
             semanticChecker.visit(root);
+
+
+            IRBuilder irBuilder = new IRBuilder(GlobalScope);
+            irBuilder.visit(root);
+
+            PrintStream ir_out = new PrintStream(new FileOutputStream("src/llvm_ir"));
+            IRPrinter irPrinter = new IRPrinter(ir_out);
+            irPrinter.printIR(irBuilder);
 
         }catch (Error err){
 //            System.out.println(err.errorMsg());

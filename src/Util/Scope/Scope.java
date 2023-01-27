@@ -15,7 +15,7 @@ public class Scope {
 
     public HashMap<String, VarDefUnitNode> variableMembers = new HashMap<>();
     public HashMap<String, FuncDefNode> functionMembers = new HashMap<>();
-    public HashMap<String, register> entities = new HashMap<>();
+    public HashMap<String, entity> entities = new HashMap<>();
     public Scope parentScope;
 
     public boolean hasReturn = false;
@@ -93,7 +93,7 @@ public class Scope {
         return null;
     }
 
-    public register getEntity(String name) {
+    public entity getEntity(String name) {
         Scope tmp = this;
         while (tmp != null) {
             if (tmp.entities.containsKey(name)) return entities.get(name);

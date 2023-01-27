@@ -2,16 +2,25 @@ package MIR;
 
 import Util.Type;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class type {
     public enum IRType{
         INT,BOOL,STRING,NULL,ClassType
     }
     public IRType irType;
+    public boolean isArray = false;
     public int dim = 0;
-    public int int_value;
-    public boolean boolean_value;
-    public String string_value;
+    public ArrayList<entity> each_num = new ArrayList<>();
+    public int int_value = 0;
+    public boolean boolean_value = false;
+    public String string_value = "\0";
     public String class_name;
+
+    public type(){
+        this.irType = IRType.NULL;
+    }
 
     public type(IRType irType){
         this.irType = irType;
