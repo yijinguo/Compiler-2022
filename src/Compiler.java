@@ -21,8 +21,8 @@ public class Compiler {
 
     public static void main(String[] args) throws Exception{
         String name="src/testcase.mx";
-        InputStream input=new FileInputStream(name);
-        //InputStream input = System.in;
+        //InputStream input=new FileInputStream(name);
+        InputStream input = System.in;
         try {
             RootNode root;
             globalScope GlobalScope=new globalScope(null);
@@ -45,15 +45,14 @@ public class Compiler {
 
             SemanticChecker semanticChecker=new SemanticChecker(GlobalScope);
             semanticChecker.visit(root);
-
-
+            
             IRBuilder irBuilder = new IRBuilder(GlobalScope);
             irBuilder.visit(root);
-
+            /*
             PrintStream ir_out = new PrintStream(new FileOutputStream("src/llvm_ir"));
             IRPrinter irPrinter = new IRPrinter(ir_out);
             irPrinter.printIR(irBuilder);
-
+            */
         }catch (Error err){
 //            System.out.println(err.errorMsg());
             throw err;
