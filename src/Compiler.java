@@ -45,10 +45,11 @@ public class Compiler {
 
             SemanticChecker semanticChecker=new SemanticChecker(GlobalScope);
             semanticChecker.visit(root);
-            
+
+            /*
             IRBuilder irBuilder = new IRBuilder(GlobalScope);
             irBuilder.visit(root);
-            /*
+
             PrintStream ir_out = new PrintStream(new FileOutputStream("src/llvm_ir"));
             IRPrinter irPrinter = new IRPrinter(ir_out);
             irPrinter.printIR(irBuilder);
