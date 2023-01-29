@@ -13,7 +13,6 @@ import grammar.*;
 public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
     public globalScope GlobalScope;
-    private ClassDefNode classDef;
 
     public ASTBuilder(globalScope Global){
         this.GlobalScope = Global;

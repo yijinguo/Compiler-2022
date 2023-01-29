@@ -32,4 +32,8 @@ public class block {
         }
     }
 
+    public void accept(IRVisitor visitor){
+        visitor.visit(this);
+    }
+
 }

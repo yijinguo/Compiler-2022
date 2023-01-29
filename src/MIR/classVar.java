@@ -1,7 +1,7 @@
 package MIR;
 
-import MIR.*;
-import java.util.ArrayList;
+import MIR.entity.entity;
+
 import java.util.HashMap;
 
 public class classVar {

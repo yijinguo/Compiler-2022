@@ -9,4 +9,10 @@ public class jump extends terminalStmt {
         super();
         this.destination = destination;
     }
+
+    @Override
+    public void accept(IRVisitor visitor){
+        visitor.visit(this);
+    }
+
 }

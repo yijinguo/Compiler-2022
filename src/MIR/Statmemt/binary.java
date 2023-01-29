@@ -1,20 +1,40 @@
 package MIR.Statmemt;
 
 import MIR.*;
-import MIR.Statmemt.*;
+import MIR.entity.constant;
+import MIR.entity.entity;
+import MIR.entity.register;
 
 public class binary extends statement{
 
-    public register lhs;
-    public entity op1, op2;
-    public String op;
+    enum BinaryInst{
+        add, sub, mul, sdiv, srem, shl, ashr, and, xor, or
+    }
 
-    public binary(register lhs, entity op1, entity op2, String op){
+    public String op;
+    public entity lhs; //register
+    public entity op1, op2;
+
+    public binary(String op, entity op1, entity op2, entity lhs){
         super();
         this.lhs = lhs;
         this.op1 = op1;
         this.op2 = op2;
-        this.op = op;
+        switch (op) {
+            case "*" -> this.op = "mul" ;
+            case "/" -> this.op = "sdiv";
+            case "%" -> this.op = "srem";
+            case "+" -> this.op = "add";
+            case "-" -> this.op = "sub";
+            case "<<" -> this.op = "shl";
+            case ">>" -> this.op = "ashr";
+            case "&" -> this.op = "and";
+            case "^" -> this.op = "xor";
+            case "|" -> this.op = "or";
+            default -> { //&&, ||
+                this.op = op;
+            }
+        }
         if (this.op1 instanceof constant) {
             this.op1 = op2;
             this.op2 = op1;
@@ -28,12 +48,12 @@ public class binary extends statement{
                     case "-" -> i.int_value = i1.int_value - i2.int_value;
                     case "<<" -> i.int_value = i1.int_value << i2.int_value;
                     case ">>" -> i.int_value = i1.int_value >> i2.int_value;
-                    case "<" -> i.int_value = (i1.int_value < i2.int_value) ? 1 : 0;
-                    case ">" -> i.int_value = (i1.int_value > i2.int_value) ? 1 : 0;
-                    case "<=" -> i.int_value = (i1.int_value <= i2.int_value) ? 1 : 0;
-                    case ">=" -> i.int_value = (i1.int_value >= i2.int_value) ? 1 : 0;
-                    case "==" -> i.int_value = (i1.int_value == i2.int_value) ? 1 : 0;
-                    case "!=" -> i.int_value = (i1.int_value != i2.int_value) ? 1 : 0;
+                    //case "<" -> i.int_value = (i1.int_value < i2.int_value) ? 1 : 0;
+                    //case ">" -> i.int_value = (i1.int_value > i2.int_value) ? 1 : 0;
+                    //case "<=" -> i.int_value = (i1.int_value <= i2.int_value) ? 1 : 0;
+                    //case ">=" -> i.int_value = (i1.int_value >= i2.int_value) ? 1 : 0;
+                    //case "==" -> i.int_value = (i1.int_value == i2.int_value) ? 1 : 0;
+                    //case "!=" -> i.int_value = (i1.int_value != i2.int_value) ? 1 : 0;
                     case "&" -> i.int_value = i1.int_value & i2.int_value;
                     case "^" -> i.int_value = i1.int_value ^ i2.int_value;
                     case "|" -> i.int_value = i1.int_value | i2.int_value;
@@ -50,6 +70,11 @@ public class binary extends statement{
             }
         }
 
+    }
+
+    @Override
+    public void accept(IRVisitor visitor){
+        visitor.visit(this);
     }
 
 }

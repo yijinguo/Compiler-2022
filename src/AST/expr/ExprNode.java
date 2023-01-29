@@ -2,7 +2,7 @@ package AST.expr;
 
 import AST.ASTNode;
 import AST.FuncDefNode;
-import MIR.*;
+import MIR.entity.entity;
 import Util.Type;
 import Util.position;
 

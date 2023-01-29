@@ -1,7 +1,7 @@
 package MIR.terminalStmt;
 
 import MIR.*;
-import MIR.terminalStmt.terminalStmt;
+import MIR.entity.entity;
 
 public class branch extends terminalStmt {
     public entity op;
@@ -14,4 +14,10 @@ public class branch extends terminalStmt {
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
     }
+
+    @Override
+    public void accept(IRVisitor visitor){
+        visitor.visit(this);
+    }
+
 }

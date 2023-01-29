@@ -1,5 +1,9 @@
 package MIR;
 
+import AST.ASTVisitor;
+import MIR.entity.entity;
+import MIR.entity.register;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -11,9 +15,8 @@ public class function{
     public String funcName;
     public boolean isInClass;
     public String className;
-    public HashMap<String, entity> paraList = new HashMap<>();
+    public HashMap<String, register> paraList = new HashMap<>();
     public LinkedList<entity> entities = new LinkedList<>();
-    public HashMap<String, entity> entities_q = new HashMap<>();
     public block rootBlock = null;
     public Set<block> blocks = new HashSet<>();
     public int reg_num = 0;
@@ -27,11 +30,20 @@ public class function{
     public void push_entity(int num, String name, entity entry){
         ((register) entry).reg_num = num;
         this.entities.add(entry);
-        this.entities_q.put(name, entry);
         reg_num++;
     }
 
     public entity getEntity(String name) {
-        return this.entities_q.getOrDefault(name, null);
+        for (entity x : this.entities) {
+            if (((register) x).identity.equals(name)) {
+                return x;
+            }
+        }
+        return null;
     }
+
+    public void accept(IRVisitor visitor){
+        visitor.visit(this);
+    }
+
 }

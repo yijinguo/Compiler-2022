@@ -2,12 +2,10 @@ package Util.Scope;
 
 
 import AST.FuncDefNode;
-import AST.TypeNode;
 import AST.VarDefUnitNode;
-import AST.expr.ExprNode;
+import MIR.entity.entity;
 import Util.Type;
 import Util.error.semanticError;
-import MIR.*;
 
 import java.util.HashMap;
 
