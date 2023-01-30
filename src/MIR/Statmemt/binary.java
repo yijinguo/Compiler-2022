@@ -3,7 +3,6 @@ package MIR.Statmemt;
 import MIR.*;
 import MIR.entity.constant;
 import MIR.entity.entity;
-import MIR.entity.register;
 
 public class binary extends statement{
 
@@ -35,6 +34,7 @@ public class binary extends statement{
                 this.op = op;
             }
         }
+        /*
         if (this.op1 instanceof constant) {
             this.op1 = op2;
             this.op2 = op1;
@@ -69,7 +69,7 @@ public class binary extends statement{
                 // Now, op1 is either register or zero
             }
         }
-
+        */
     }
 
     @Override

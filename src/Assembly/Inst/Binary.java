@@ -5,7 +5,7 @@ import Assembly.Operand.Reg;
 public class Binary extends Inst{
 
     String op;
-    //mul, div, rem, add, sub, sll, sra, slt, sqt, sle, sge, and, xor, or
+    //mul, div, rem, add, sub, sll, sra, and, xor, or,   slt, sqt, sle, sge,
 
     public Binary(String op, Reg rd, Reg rs1, Reg rs2){
         this.rd = rd;

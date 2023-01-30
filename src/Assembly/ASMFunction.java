@@ -10,6 +10,9 @@ public class ASMFunction {
     public ArrayList<ASMBlock> Blocks = new ArrayList<>();
     public ArrayList<Reg> params = new ArrayList<>();
 
+    public int totalStack = 0;
+    public int paramsUsed = 0, allocaUsed = 0;
+
     public ASMFunction(String name){
         this.funcName = name;
     }

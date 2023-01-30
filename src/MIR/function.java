@@ -27,8 +27,7 @@ public class function{
         blocks.add(rootBlock);
     }
 
-    public void push_entity(int num, String name, entity entry){
-        ((register) entry).reg_num = num;
+    public void push_entity(String name, entity entry){
         this.entities.add(entry);
         reg_num++;
     }

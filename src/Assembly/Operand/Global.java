@@ -1,8 +1,8 @@
 package Assembly.Operand;
 
 public abstract class Global extends Reg{
-    String name;
-    String type;
+    public String name;
+    public String type;
     //.asciz : GlobalString
     // .word : int, string
     // .byte : bool

@@ -3,6 +3,7 @@ package MIR.Statmemt;
 import MIR.*;
 import MIR.entity.entity;
 import MIR.entity.register;
+import MIR.type.IRType;
 
 import java.util.ArrayList;
 
@@ -12,15 +13,15 @@ public class call extends statement{
     public register returnReg;
     public ArrayList<entity> paramList = new ArrayList<>();
 
-    public call(int num, type returnType, String functionName){
+    public call(register returnReg, String functionName){
         super();
-        this.returnReg = new register(num, returnType);
+        this.returnReg = returnReg;
         this.functionName = functionName;
     }
 
-    public call(int num, type returnType, String functionName, String className){
+    public call(register returnReg, String functionName, String className){
         super();
-        this.returnReg = new register(num, returnType);
+        this.returnReg = returnReg;
         this.functionName = className + "::" + functionName;
         this.className = className;
     }

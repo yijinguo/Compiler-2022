@@ -3,14 +3,14 @@ package Middlend;
 import AST.*;
 import AST.expr.*;
 import AST.stmt.*;
-import MIR.entity.constant;
-import MIR.entity.entity;
-import MIR.entity.register;
+import MIR.entity.*;
 import MIR.terminalStmt.*;
+import MIR.type.IRInt;
 import Util.Scope.*;
 
 import MIR.*;
 import MIR.Statmemt.*;
+import MIR.type.*;
 
 import java.util.HashMap;
 
@@ -20,9 +20,12 @@ public class IRBuilder implements ASTVisitor {
     //对每一个类开一个结点。
     private block currBlk = null;
     private function currFunc = null;
-    private classVar currentClass = null;
+    private classVar currClass = null;
     public HashMap<String, function> functions = new HashMap<>();
     public HashMap<String, classVar> classLists =  new HashMap<>();
+
+    public HashMap<String, IRClass> classTypes = new HashMap<>();
+
     public globalScope gScope;
     public int string_num = 0;
 
@@ -37,41 +40,46 @@ public class IRBuilder implements ASTVisitor {
         it.stmts.forEach(s -> s.accept(this));
     }
     public void visit(ClassDefNode it){
-        currentClass = new classVar(it.name);
-        if (it.classBuilder != null) it.classBuilder.accept(this);
+        currClass = new classVar(it.name);
+        if (it.classBuilder != null) {
+            currClass.type.have_build = true;
+            it.classBuilder.accept(this);
+        }
         it.varList.forEach(x->x.accept(this));
         it.funcList.forEach(x->x.accept(this));
-        classLists.put(currentClass.className, currentClass);
-        currentClass = null;
+        classLists.put(currClass.className, currClass);
+        currClass = null;
     }
     public void visit(ClassBuildNode it){
         currFunc = new function("void", it.name);
         currFunc.isInClass = true;
-        currFunc.className = currentClass.className;
+        currFunc.className = currClass.className;
         it.suites.accept(this);
+        currClass.build = currFunc;
         currFunc = null;
     }
+
     public void visit(FuncDefNode it){
         currFunc = new function(it.returnType.type.typeName, it.funcName);
         currBlk = currFunc.rootBlock;
         if (it.params != null) it.params.accept(this);
         it.stmts.forEach(x -> x.accept(this));
-        if (currentClass == null) {
+        if (currClass == null) {
             currFunc.isInClass = false;
             functions.put(currFunc.funcName, currFunc);
         } else {
             currFunc.isInClass = true;
-            currFunc.className = currentClass.className;
-            currentClass.functions.put(currFunc.funcName, currFunc);
+            currFunc.className = currClass.className;
+            currClass.functions.put(currFunc.funcName, currFunc);
         }
         currFunc = null;
     }
 
     public void visit(ParameterListNode it){
         for (VarDefUnitNode x : it.varList) {
-            register reg_x = new register(++currFunc.reg_num, x.varName, x.type.type);
+            register reg_x = new register(x.varName, x.type.type);
             currFunc.paraList.put(x.varName, reg_x);
-            currFunc.push_entity(++currFunc.reg_num, x.varName, reg_x);
+            currFunc.push_entity(x.varName, reg_x);
         }
     }
 
@@ -80,74 +88,41 @@ public class IRBuilder implements ASTVisitor {
     }
 
     public void visit(VarDefUnitNode it){
-        register var = new register(++currFunc.reg_num, it.varName, it.type.type);
-        if (var.irType.irType == type.IRType.ClassType) {
-            int s = 0;
-            for (VarDefNode x : gScope.getClass(it.varName, null).varList) {
-                for (VarDefUnitNode y : x.units) {
-                    if (y.type.type.typeName.equals("string"))
-                        s += 24;
-                    else
-                        s += 4;
-                }
-            }
-            var.irType.class_size = s;
-        }
-        if (currentClass != null) {
-            var.isInClass = true;
-            var.className = currentClass.className;
-        }
-        if (it.type.type.dim > 0) { //数组的创建
-            var.irType.isArray = true;
-            var.irType.dim = it.type.type.dim;
-            if (it.init instanceof NewExprNode) {
-                for (ExprNode x : ((NewExprNode) it.init).sizeList) {
-                    x.accept(this);
-                    var.irType.each_num.add(x.val);
-                }
-                var.irType.haveDef = var.irType.each_num.size() == var.irType.dim;
-                if (currBlk != null && var.irType.haveDef) {
-                    //todo
-                    entity tmp = var.irType.each_num.get(0);
-                    for (int i = 1; i < var.irType.each_num.size(); i++) {
-                        entity e = var.irType.each_num.get(i);
-                        register dest = new register(++currFunc.reg_num, e.irType);
-                        if (e instanceof register) {
-                            register l = new register(++currFunc.reg_num, e.irType);
-                            currBlk.push_back(new load(l, e));
-                            currBlk.push_back(new binary("mul", tmp, l, dest));
-                        } else {
-                            currBlk.push_back(new binary("mul", tmp, e, dest));
-                        }
-                        tmp = dest;
-                    }
-                    currBlk.push_back(new alloca(new register(++currFunc.reg_num, tmp.irType), tmp));
-                }
-
-            }
-        } else {
+        if (currFunc == null) { //global vars
+            globalVar var = new globalVar(it.varName, it.type.type);
             if (it.init != null) {
+                //todo 处理数组直接定义全部空间的情况
                 it.init.accept(this);
-                if (currBlk != null) {
+                var.init = it.init.val;
+            } else {
+                if (var.irType instanceof IRClass) {
+                    gScope.getClass(var.irType.name, null).classBuilder.accept(this);
+                } else {
+                    var.initial();
+                }
+            }
+            gScope.entities.put(it.varName, var);
+        } else { //function vars
+            register var = new register(it.varName, it.type.type);
+            if (it.init != null) {
+                //todo
+                //1.类定义中有没有直接赋值代替构造函数？
+
+                if (it.init instanceof NewExprNode) {
+                    //2.处理数组直接定义全部空间的情况
+                } else {
+                    it.init.accept(this);
                     currBlk.push_back(new alloca(var));
                     currBlk.push_back(new store(var, it.init.val));
-                } else {
-                    switch (var.irType.irType) {
-                        case INT -> var.irType.int_value = it.init.val.irType.int_value;
-                        case BOOL -> var.irType.boolean_value = it.init.val.irType.boolean_value;
-                        case STRING -> var.irType.string_value = it.init.val.irType.string_value;
-                        default -> {}
-                    }
                 }
             }
+            if (currClass != null) {
+                currClass.add_entity(it.varName, var);
+            } else {
+                currFunc.push_entity(it.varName, var);
+            }
         }
-        if (currBlk != null) {
-            currFunc.push_entity(++currFunc.reg_num, it.varName, var);
-        } else if (currentClass != null) {
-            currentClass.entities.put(it.varName, var);
-        } else {
-            gScope.entities.put(it.varName, var);
-        }
+
     }
     public void visit(TypeNode it){}
 
@@ -181,9 +156,12 @@ public class IRBuilder implements ASTVisitor {
         if (it.varDef != null) it.varDef.accept(this);
         else if (it.init != null) it.init.accept(this);
         if (it.step != null) it.step.accept(this);
-        it.condition.accept(this);
-        if (currBlk.tailStmt == null) currBlk.push_back(new branch(it.condition.val, forBlock, destination));
-
+        if (it.condition != null) {
+            it.condition.accept(this);
+            if (currBlk.tailStmt == null) currBlk.push_back(new branch(it.condition.val, forBlock, destination));
+        } else {
+            if (currBlk.tailStmt == null) currBlk.push_back(new branch(new consBool(false), forBlock, destination));
+        }
         currBlk = forBlock;
         for (StmtNode x : it.stmts) x.accept(this);
         if (currBlk.tailStmt == null) currBlk.push_back(new jump(start));
@@ -253,10 +231,10 @@ public class IRBuilder implements ASTVisitor {
     public void visit(ArrayExprNode it){
         it.arrayName.accept(this);
         it.index.accept(this);
-        register r = new register(++currFunc.reg_num, it.arrayName.type);
+        register r = new register(it.arrayName.type);
         currBlk.push_back(new load(r, it.arrayName.val));
-        it.val = new register(++currFunc.reg_num, it.arrayName.type);
-        it.val.irType.dim--;
+        it.val = new register(it.arrayName.type);
+        ((IRPtr) it.val.irType).dim--;
         currBlk.push_back(new getelementptr(it.val, r, it.index.val));
 
         /*
@@ -265,13 +243,13 @@ public class IRBuilder implements ASTVisitor {
             int total_dim = sim.irType.dim;
             entity tmp = sim.irType.each_num.get(total_dim);
             for (int i = total_dim - 1; i >= total_dim - it.dim; i--) {
-                entity dest = new register(++currFunc.reg_num, it.type);
+                entity dest = new register(it.type);
                 currBlk.push_back(new binary("mul", sim.irType.each_num.get(i), tmp, dest));
                 tmp = dest;
             }
-            register tail = new register(++currFunc.reg_num, it.type);
+            register tail = new register(it.type);
             currBlk.push_back(new binary("mul", it.index.val, tmp, tail));
-            it.val = new register(++currFunc.reg_num, it.type);
+            it.val = new register(it.type);
             currBlk.push_back(new getelementptr(it.val, it.arrayName.val, tail));
         } else {
             //todo
@@ -282,7 +260,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(AssignExprNode it) {
         it.lhs.accept(this);
         it.rhs.accept(this);
-        register r = new register(++currFunc.reg_num, it.lhs.type);
+        register r = new register(it.lhs.type);
         currBlk.push_back(new load(r, it.rhs.val));
         currBlk.push_back(new store(it.lhs.val, r));
     }
@@ -290,32 +268,26 @@ public class IRBuilder implements ASTVisitor {
     public void visit(AtomExprNode it){
         if (!it.str.equals("this")) {
              if (it.type.isConst) { //处理常数
-                it.val = new constant();
                 switch (it.type.typeName) {
-                    case "int" -> {
-                        it.val.irType.irType = type.IRType.INT;
-                        it.val.irType.int_value = Integer.parseInt(it.str);
-                    }
-                    case "bool" -> {
-                        it.val.irType.irType = type.IRType.BOOL;
-                        it.val.irType.boolean_value = it.str.equals("true");
-                    }
+                    case "int" -> it.val = new consInt(Integer.parseInt(it.str));
+                    case "bool" -> it.val = new consBool(it.str.equals("true"));
                     case "string" -> {
-                        it.val.irType.irType = type.IRType.STRING;
-                        it.val.irType.string_value = it.str;
+                        it.val = new consString(it.str);
                         gScope.entities.put(it.str, it.val);
                     }
-                    case "null" -> it.val.irType.irType = type.IRType.NULL;
+                    case "null" -> it.val = new consNull();
                     default -> {
 
                     }
                 }
             } else {
+                 //todo
+                 //need to modify
                  if (currBlk != null)
                      it.val = currFunc.getEntity(it.str);
                  if (it.val == null) {
-                     if (currentClass != null)
-                         it.val = currentClass.getEntity(it.str);
+                     if (currClass != null)
+                         it.val = currClass.getEntity(it.str);
                      if (it.val == null)
                          it.val = gScope.getEntity(it.str);
                  }
@@ -329,44 +301,48 @@ public class IRBuilder implements ASTVisitor {
         it.rhs.accept(this);
         switch (it.op) {
             case "<", ">", "<=", ">=", "==", "!=" -> {
-                register l = new register(++currFunc.reg_num, it.lhs.type), r = new register(++currFunc.reg_num, it.rhs.type);
+                register l = new register(it.lhs.type), r = new register(it.rhs.type);
                 currBlk.push_back(new load(l, it.lhs.val));
                 currBlk.push_back(new load(r, it.rhs.val));
-                it.val = new register(++currFunc.reg_num, new type(type.IRType.BOOL));
+                it.val = new register(new IRInt(1));
                 currBlk.push_back(new icmp(it.op, l, r, it.val));
             }
             case "&&" -> {
-                register l = new register(++currFunc.reg_num, it.lhs.type);
+                register l = new register(it.lhs.type);
                 currBlk.push_back(new load(l, it.lhs.val));
                 block rhs = new block(++currFunc.reg_num, currBlk), dest = new block(++currFunc.reg_num, currBlk);
-                currBlk.push_back(new branch(l, rhs, dest));
+                register d = new register(new IRInt(1));
+                currBlk.push_back(new unary("snez", new consInt(0), l, d));
+                currBlk.push_back(new branch(d, rhs, dest));
 
-                register r = new register(++currFunc.reg_num, it.rhs.type);
+                register r = new register(it.rhs.type);
                 rhs.push_back(new load(r, it.rhs.val));
-                rhs.push_back(new unary("snez", new constant(0), r, l));
+                rhs.push_back(new unary("snez", new consInt(0), r, d));
                 rhs.push_back(new jump(dest));
 
-                it.val = new register(++currFunc.reg_num, new type(type.IRType.BOOL));
-                dest.push_back(new store(it.val, l));
+                it.val = new register(new IRInt(1));
+                dest.push_back(new load(it.val, d));
                 currBlk = dest;
             }
             case "||" -> {
-                register l = new register(++currFunc.reg_num, it.lhs.type);
+                register l = new register(it.lhs.type);
                 currBlk.push_back(new load(l, it.lhs.val));
                 block rhs = new block(++currFunc.reg_num, currBlk), dest = new block(++currFunc.reg_num, currBlk);
-                currBlk.push_back(new branch(l, dest, rhs));
+                register d = new register(new IRInt(1));
+                currBlk.push_back(new unary("snez", new consInt(0), l, d));
+                currBlk.push_back(new branch(d, dest, rhs));
 
-                register r = new register(++currFunc.reg_num, it.rhs.type);
+                register r = new register(it.rhs.type);
                 rhs.push_back(new load(r, it.rhs.val));
-                rhs.push_back(new unary("snez", new constant(0), r, l));
+                rhs.push_back(new unary("snez", new consInt(0), r, d));
                 rhs.push_back(new jump(dest));
 
-                it.val = new register(++currFunc.reg_num, new type(type.IRType.BOOL));
-                dest.push_back(new store(it.val, l));
+                it.val = new register(new IRInt(1));
+                dest.push_back(new load(it.val, d));
                 currBlk = dest;
             }
             default -> {
-                it.val = new register(++currFunc.reg_num, it.type);
+                it.val = new register(it.type);
                 currBlk.push_back(new binary(it.op, it.lhs.val, it.rhs.val, it.val));
             }
         }
@@ -378,10 +354,12 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(FuncExprNode it){
         call callFunc;
+        it.val = new register(it.type);
         if (it.funcName instanceof MemberExprNode) {
-            callFunc = new call(++currFunc.reg_num, new type(it.type), ((MemberExprNode)it.funcName).member, ((MemberExprNode)it.funcName).name.str);
+            //todo
+            callFunc = new call((register) it.val, ((MemberExprNode)it.funcName).member, ((MemberExprNode)it.funcName).name.str);
         } else {
-            callFunc = new call(++currFunc.reg_num, new type(it.type), it.funcName.str);
+            callFunc = new call((register) it.val, it.funcName.str);
         }
         for (ExprNode x : it.lists.exprs) {
             x.accept(this);
@@ -390,7 +368,7 @@ public class IRBuilder implements ASTVisitor {
         if (it.type.typeName.equals("void")) {
             callFunc.returnReg = null;
         } else {
-            callFunc.returnReg = new register(++currFunc.reg_num, it.type);
+            callFunc.returnReg = new register(it.type);
         }
         currBlk.push_back(callFunc);
         it.val = callFunc.returnReg;
@@ -400,7 +378,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(MemberExprNode it){ //函数调用不跑这个函数，只涉及变量调用
         it.name.accept(this);
         if (it.name.str.equals("this")) {
-            it.val = currentClass.getEntity(it.member);
+            it.val = currClass.getEntity(it.member);
         } else {
             it.val = classLists.get(it.name.str).getEntity(it.member);
         }
@@ -408,13 +386,13 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(NewExprNode it){ //只允许1层new
         //todo
-        it.val = new register(++currFunc.reg_num, it.type);
+        it.val = new register(it.type);
         ExprNode tmp = it.sizeList.get(0);
         tmp.accept(this);
         if (tmp.val instanceof constant) {
             currBlk.push_back(new createPtr(it.val, tmp.val));
         } else {
-            register r = new register(++currFunc.reg_num, tmp.val.irType);
+            register r = new register(tmp.val.irType);
             currBlk.push_back(new load(r, tmp.val));
             currBlk.push_back(new createPtr(it.val, r));
         }
@@ -422,39 +400,39 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(PreAddExprNode it){
         it.expr.accept(this);
-        register l = new register(++currFunc.reg_num, it.expr.type);
+        register l = new register(it.expr.type);
         currBlk.push_back(new load(l, it.expr.val));
-        it.val = new register(++currFunc.reg_num, it.type);
-        currBlk.push_back(new unary("addi" , new constant(it.op.equals("++") ? 1 : -1), l, it.val));
+        it.val = new register(it.type);
+        currBlk.push_back(new unary("addi" , new consInt(it.op.equals("++") ? 1 : -1), l, it.val));
         currBlk.push_back(new store(it.expr.val, it.val));
     }
 
     public void visit(UnaryExprNode it){ //!,~,+,-,++,--
         it.expr.accept(this);
-        register d = new register(++currFunc.reg_num, it.expr.type);
+        register d = new register(it.expr.type);
         currBlk.push_back(new load(d, it.expr.val));
         switch (it.op) {
             case "!" -> {
-                it.val = new register(++currFunc.reg_num, it.type);
-                currBlk.push_back(new unary("seqz", new constant(0), d, it.val));
+                it.val = new register(it.type);
+                currBlk.push_back(new unary("seqz", new consInt(0), d, it.val));
             }
             case "~" -> {
-                it.val = new register(++currFunc.reg_num, it.type);
-                currBlk.push_back(new unary("xori", new constant(-1), d, it.val));
+                it.val = new register(it.type);
+                currBlk.push_back(new unary("xori", new consInt(-1), d, it.val));
             }
             case "-" -> {
-                it.val = new register(++currFunc.reg_num, it.type);
-                currBlk.push_back(new binary("-", new constant(0), d, it.val));
+                it.val = new register(it.type);
+                currBlk.push_back(new binary("-", new consInt(0), d, it.val));
             }
             case "++" -> {
-                register dest = new register(++currFunc.reg_num, it.expr.type);
-                currBlk.push_back(new unary("addi", new constant(1), d, dest));
+                register dest = new register(it.expr.type);
+                currBlk.push_back(new unary("addi", new consInt(1), d, dest));
                 currBlk.push_back(new store(it.expr.val, dest));
                 it.val = d;
             }
             case "--" -> {
-                register dest = new register(++currFunc.reg_num, it.expr.type);
-                currBlk.push_back(new unary("addi", new constant(-1), d, dest));
+                register dest = new register(it.expr.type);
+                currBlk.push_back(new unary("addi", new consInt(-1), d, dest));
                 currBlk.push_back(new store(it.expr.val, dest));
                 it.val = d;
             }

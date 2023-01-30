@@ -3,7 +3,7 @@ package Util.Scope;
 
 import AST.FuncDefNode;
 import AST.VarDefUnitNode;
-import MIR.entity.entity;
+import MIR.entity.*;
 import Util.Type;
 import Util.error.semanticError;
 

@@ -1,7 +1,13 @@
 import AST.RootNode;
+import Assembly.ASMProgram;
+import Backend.ASMPrinter;
+import Backend.InstSelector;
+import Backend.RegAlloca;
 import Frontend.ASTBuilder;
 import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
+import Middlend.IRBuilder;
+import Middlend.IRPrinter;
 import Util.Scope.globalScope;
 import Util.MxErrorListener;
 import org.antlr.v4.runtime.CharStreams;
@@ -9,7 +15,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 
 import grammar.*;
 
@@ -42,15 +50,24 @@ public class Compiler {
             SemanticChecker semanticChecker=new SemanticChecker(GlobalScope);
             semanticChecker.visit(root);
 
-            /*
             //ast to ir
+
             IRBuilder irBuilder = new IRBuilder(GlobalScope);
             irBuilder.visit(root);
-
-            PrintStream ir_out = new PrintStream(new FileOutputStream("src/output.ll"));
+            PrintStream ir_out = new PrintStream(new FileOutputStream("output.ll"));
             IRPrinter irPrinter = new IRPrinter(ir_out);
             irPrinter.printIR(irBuilder);
-            */
+
+            //ir to asm
+
+            InstSelector selector = new InstSelector(irBuilder);
+            RegAlloca regAlloca = new RegAlloca(selector.program);
+            regAlloca.work();
+
+            PrintStream asm_out = new PrintStream(new FileOutputStream("output.s"));
+            ASMPrinter asmPrinter = new ASMPrinter(asm_out);
+            asmPrinter.print(selector.program);
+
         }catch (Error err){
 //            System.out.println(err.errorMsg());
             throw err;

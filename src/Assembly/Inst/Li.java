@@ -2,16 +2,19 @@ package Assembly.Inst;
 
 import Assembly.Operand.Imm;
 import Assembly.Operand.Reg;
+import Assembly.Operand.VirtualImm;
 
 public class Li extends Inst{
 
-    public Li(Reg rd, Imm imm){
+    public VirtualImm pseudo;
+
+    public Li(Reg rd, VirtualImm imm){
         this.rd = rd;
-        this.imm = imm;
+        this.pseudo = imm;
     }
 
     @Override
     public String toString(){
-        return ("li\t" + rd + ", " + imm);
+        return ("li\t" + rd + ", " + pseudo);
     }
 }

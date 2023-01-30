@@ -1,15 +1,15 @@
 package Assembly.Operand;
 
-import MIR.entity.constant;
+import MIR.entity.*;
 
 public class GlobalString extends Global{
-    String str;
+    public String str;
 
-    public GlobalString(constant c){
-        this.str = c.irType.string_value;
+    public GlobalString(consString s){
+        this.str = s.value;
         this.type = ".asciz";
-        if (c.irType.string_value_r == 0) this.name = ".L.str";
-        else this.name = ".L.str." + c.irType.string_value_r;
+        if (s.id == 0) this.name = ".L.str";
+        else this.name = ".L.str." + s.id;
     }
 
     @Override
