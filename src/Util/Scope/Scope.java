@@ -1,6 +1,7 @@
 package Util.Scope;
 
 
+import AST.ClassDefNode;
 import AST.FuncDefNode;
 import AST.VarDefUnitNode;
 import MIR.entity.*;
@@ -15,11 +16,17 @@ public class Scope {
     public HashMap<String, FuncDefNode> functionMembers = new HashMap<>();
     public HashMap<String, entity> entities = new HashMap<>();
     public Scope parentScope;
-
     public boolean hasReturn = false;
+
+    public ClassDefNode InClass = null;
 
     public Scope(Scope parentScope){
         this.parentScope = parentScope;
+    }
+
+    public Scope(Scope parentScope, ClassDefNode InClass){
+        this.parentScope = parentScope;
+        this.InClass = InClass;
     }
 
     public void add_var(VarDefUnitNode unit){
@@ -92,11 +99,9 @@ public class Scope {
     }
 
     public entity getEntity(String name) {
-        Scope tmp = this;
-        while (tmp != null) {
-            if (tmp.entities.containsKey(name)) return entities.get(name);
-            tmp = tmp.parentScope;
-        }
-        return null;
+        if (entities.containsKey(name))
+            return entities.get(name);
+        else
+            return parentScope == null ? null : parentScope.getEntity(name);
     }
 }

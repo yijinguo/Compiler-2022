@@ -69,8 +69,7 @@ public class InstSelector implements IRVisitor {
     }
 
     public void visit(function it){
-        String funcName = it.isInClass ? it.className + "::" + it.funcName : it.funcName;
-        currFunc = new ASMFunction(funcName);
+        currFunc = new ASMFunction(it.funcName);
         //todo
         //paramsUsed
         blockList.clear();
@@ -129,6 +128,7 @@ public class InstSelector implements IRVisitor {
             default -> {}
         }
     }
+    public void visit(zext it){}
     public void visit(call it){
         for (int i = 0; i < it.paramList.size(); ++i) {
             entity e = it.paramList.get(i);
@@ -147,9 +147,7 @@ public class InstSelector implements IRVisitor {
     public void visit(getelementptr it){
 
     }
-    public void visit(createPtr it){
-
-    }
+    public void visit(cast it){}
 
     //terminal
     public void visit(branch it){

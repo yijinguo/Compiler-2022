@@ -1,10 +1,12 @@
 package AST;
 
+import MIR.type.IRType;
 import Util.*;
 
 public class TypeNode extends ASTNode{
 
     public Type type = new Type();
+    public IRType irType = null;
 
     public TypeNode(position pos) {
         super(pos);

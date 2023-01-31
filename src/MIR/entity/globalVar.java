@@ -1,19 +1,17 @@
 package MIR.entity;
 
 import MIR.type.*;
+import MIR.*;
 import Util.Type;
 
 public class globalVar extends register{
 
     public entity init = null;
+    public boolean ifClass = false;
+    public function build = null;
 
     public globalVar(String name, IRType type) {
         super(name, new IRPtr(type));
-        --reg_cnt;
-    }
-
-    public globalVar(String name, Type type){
-        super(name, type);
         --reg_cnt;
     }
 

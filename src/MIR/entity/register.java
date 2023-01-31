@@ -15,19 +15,7 @@ public class register extends entity {
         reg_num = ++reg_cnt;
     }
 
-    public register(Type type){
-        super(type);
-        this.identity = "";
-        reg_num = ++reg_cnt;
-    }
-
     public register(String name, IRType type){
-        super(type);
-        this.identity = name;
-        reg_num = ++reg_cnt;
-    }
-
-    public register(String name, Type type){
         super(type);
         this.identity = name;
         reg_num = ++reg_cnt;

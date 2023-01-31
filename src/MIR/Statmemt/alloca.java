@@ -2,16 +2,19 @@ package MIR.Statmemt;
 
 import MIR.IRVisitor;
 import MIR.entity.*;
+import MIR.type.IRType;
 
 public class alloca extends statement{
 
+    public IRType type;
     public register dest;
 
     public boolean isArray = false;
 
     public entity array_size;
 
-    public alloca(register d){
+    public alloca(IRType type, register d){
+        this.type = type;
         this.dest = d;
     }
 

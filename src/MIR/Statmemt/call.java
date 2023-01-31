@@ -19,11 +19,11 @@ public class call extends statement{
         this.functionName = functionName;
     }
 
-    public call(register returnReg, String functionName, String className){
+    public call(register returnReg, String functionName, entity... params){
         super();
         this.returnReg = returnReg;
-        this.functionName = className + "::" + functionName;
-        this.className = className;
+        this.functionName = functionName;
+        for (entity e : params) paramList.add(e);
     }
 
     @Override

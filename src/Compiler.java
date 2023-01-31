@@ -24,7 +24,8 @@ import grammar.*;
 public class Compiler {
 
     public static void main(String[] args) throws Exception{
-        String name="src/testcase.mx";
+        //String name="src/testcase.mx";
+        String name = "src/myself.mx";
         InputStream input=new FileInputStream(name);
         //InputStream input = System.in;
         try {
@@ -59,7 +60,7 @@ public class Compiler {
             irPrinter.printIR(irBuilder);
 
             //ir to asm
-
+            /*
             InstSelector selector = new InstSelector(irBuilder);
             RegAlloca regAlloca = new RegAlloca(selector.program);
             regAlloca.work();
@@ -67,7 +68,7 @@ public class Compiler {
             PrintStream asm_out = new PrintStream(new FileOutputStream("output.s"));
             ASMPrinter asmPrinter = new ASMPrinter(asm_out);
             asmPrinter.print(selector.program);
-
+             */
         }catch (Error err){
 //            System.out.println(err.errorMsg());
             throw err;

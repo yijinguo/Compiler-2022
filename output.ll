@@ -1,42 +1,35 @@
-a=@ab=@b
-define int main(i32** %2, i32 %14) {
-3:
-	%15 = load i32, i32* %14
-	%16 = load i32, i32* 1
-	%17 = icmpeq i1 %15, %16
-	%18 = load i8, i1* %17
-	%19 = snez i1 %18, 0
-	br i1 %19, label %6, label %7
+@a = global i32 1
 
-5:
+define i32 func() {
 	ret i32 0
 
-	%3 = load i32**, i32*** %2
-	%4 = getelementptr i32**, i32** %3, i32 0
-	%5 = load i32*, void* null
-	store i32** %4, i32**%5
-	%6 = load i32**, i32*** %2
-	%7 = getelementptr i32**, i32** %6, i32 1
-	%8 = call operator new[](unsigned int), i32
-	%9 = load i32*, i32** %8
-	store i32** %7, i32**%9
-	%10 = load i32**, i32*** %2
-	%11 = getelementptr i32**, i32** %10, i32 2
-	%12 = call operator new[](unsigned int), i32
-	%13 = load i32*, i32** %12
-	store i32** %11, i32**%13
-	%14 = alloca i32
-	store i32 %14, i32*0
-	br label %3
-
-4:
-	br label %4
-
 }
-%class.A = type { }
-define int A::f() {
-	%1 = load i32, i32* @a
-	store i32@b, i32*%1
-	ret i32@b
+define i32 main() {
+	%1 = alloca i32
+	store i32 1, i32* %1
+	%2 = alloca i32
+	store i32* %1, i32* %2
+	br label %1
+
+1:
+	%3 = alloca i32
+	store i32 0, i32* %3
+	%4 = load i32*, i32** %3
+	%5 = load i32, i32* 10
+	%6 = icmp slt i1 %4, %5
+	%7 = zext i1 %6 to i32
+	br i32 %7, label %2, label %3
+
+2:
+	%8 = load i32*, i32** %3
+	%9 = add nsw i32 %8, 1
+	store i32 %9, i32* %3
+	%10 = load i32*, i32** %1
+	%11 = add nsw i32 %10, 1
+	store i32 %11, i32* %1
+	br label %1
+
+3:
+	ret i32 0
 
 }

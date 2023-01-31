@@ -15,9 +15,10 @@ public interface IRVisitor {
     public void visit(binary it);
     public void visit(unary it);
     public void visit(icmp it);
+    public void visit(zext it);
     public void visit(call it);
     public void visit(getelementptr it);
-    public void visit(createPtr it);
+    public void visit(cast it);
 
     //terminal
     public void visit(branch it);

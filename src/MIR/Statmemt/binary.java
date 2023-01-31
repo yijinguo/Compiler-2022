@@ -20,15 +20,15 @@ public class binary extends statement{
         this.op1 = op1;
         this.op2 = op2;
         switch (op) {
-            case "*" -> this.op = "mul" ;
+            case "*" -> this.op = "mul nsw" ;
             case "/" -> this.op = "sdiv";
             case "%" -> this.op = "srem";
-            case "+" -> this.op = "add";
-            case "-" -> this.op = "sub";
+            case "+", "add" -> this.op = "add nsw";
+            case "-", "sub" -> this.op = "sub nsw";
             case "<<" -> this.op = "shl";
             case ">>" -> this.op = "ashr";
             case "&" -> this.op = "and";
-            case "^" -> this.op = "xor";
+            case "^", "xor" -> this.op = "xor";
             case "|" -> this.op = "or";
             default -> { //&&, ||
                 this.op = op;

@@ -27,4 +27,8 @@ public class IRPtr extends IRType{
         }
     }
 
+    public IRType pointDown(){
+        return dim == 1 ? base : new IRPtr(base, dim-1);
+    }
+
 }

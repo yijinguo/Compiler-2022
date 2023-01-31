@@ -3,14 +3,17 @@ package MIR.type;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import MIR.*;
+
 public class IRClass extends IRType{
 
     public ArrayList<IRType> memberType = new ArrayList<>();
     public HashMap<String, Integer> memberMap = new HashMap<>();
     public boolean have_build = false;
+    public function build = null;
 
-    public IRClass(String name){
-        super(name);
+    public IRClass(String name, int size){
+        super("%class." + name, size);
     }
 
     public void add_member(String name, IRType type){
@@ -27,5 +30,7 @@ public class IRClass extends IRType{
         //size = 0;
         //memberType.forEach(x->{size += x.size; });
     }
+
+
 
 }

@@ -3,24 +3,21 @@ package MIR;
 import AST.ASTVisitor;
 import MIR.entity.entity;
 import MIR.entity.register;
+import MIR.type.IRType;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 public class function{
 
-    public String returnType;
+    public IRType returnType;
+    public entity returnReg;
     public String funcName;
-    public boolean isInClass;
-    public String className;
     public HashMap<String, register> paraList = new HashMap<>();
     public LinkedList<entity> entities = new LinkedList<>();
     public block rootBlock = null;
-    public Set<block> blocks = new HashSet<>();
-    public int reg_num = 0;
-    public function(String returnType, String funcName){
+    public ArrayList<block> blocks = new ArrayList<>();
+    public int block_cnt = 0;
+    public function(IRType returnType, String funcName){
         this.returnType = returnType;
         this.funcName = funcName;
         rootBlock = new block(0);
@@ -29,7 +26,7 @@ public class function{
 
     public void push_entity(String name, entity entry){
         this.entities.add(entry);
-        reg_num++;
+        block_cnt++;
     }
 
     public entity getEntity(String name) {

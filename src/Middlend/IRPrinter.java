@@ -8,6 +8,8 @@ import java.util.Map;
 import MIR.Statmemt.*;
 import MIR.entity.*;
 import MIR.terminalStmt.*;
+import MIR.type.IRClass;
+import MIR.type.IRType;
 
 public class IRPrinter implements IRVisitor{
     private PrintStream out;
@@ -19,38 +21,39 @@ public class IRPrinter implements IRVisitor{
     public void printIR(IRBuilder IR){
         //全局变量
         for (Map.Entry<String, entity> entry : IR.gScope.entities.entrySet()){
-            out.print(entry.toString());
+            if (entry.getValue() instanceof globalVar) {
+                globalVar it = (globalVar) entry.getValue();
+                out.print(it + " = global " + it.init.printWithType() + "\n");
+            }
+            //out.print(entry.getValue().toString() + "\n");
         }
         out.print("\n");
+        IR.classTypes.values().forEach(this::visitClass);
         //函数
         IR.functions.values().forEach(x->x.accept(this));
         //类定义
-        for (classVar x : IR.classLists.values()) visitClass(x);
         out.close();
     }
 
-    public void visitClass(classVar x){
-        out.print("%class." + x.className + " = type {");
+    public void visitClass(IRClass x){
+        out.print(x.name + " = type { ");
         boolean first = true;
-        for (Map.Entry<String, entity> entry : x.entities.entrySet()) {
+        for (IRType t : x.memberType) {
             if (first) first = false;
             else out.print(", ");
-            out.print(entry.getValue().irType);
+            out.print(t);
         }
         out.print(" }\n");
-        for (Map.Entry<String, function> f : x.functions.entrySet()) {
-            f.getValue().accept(this);
-        }
     }
 
+
     public void visit(function it){
-        String funcName = (!it.isInClass) ? it.funcName : it.className + "::" + it.funcName;
-        out.print("define " + it.returnType + " " + funcName + "(");
+        out.print("define " + it.returnType + " " + it.funcName + "(");
         boolean first = true;
         for (entity e : it.entities) {
             if (first) first = false;
             else out.print(", ");
-            out.print(getWithType(e));
+            out.print(e.printWithType());
         }
         out.print(") {\n");
         it.blocks.forEach(x->x.accept(this));
@@ -63,6 +66,66 @@ public class IRPrinter implements IRVisitor{
         out.print("\n");
     }
 
+    //statement
+    public void visit(alloca it){
+        out.print("\t" + it.dest + " = alloca " + it.type + "\n");
+    }
+    public void visit(load it){
+        out.print("\t" + it.dest + " = load " + it.cont.irType + ", " + it.cont.irType + "* " + it.cont + "\n");
+    }
+    public void visit(store it){
+        out.print("\tstore " + it.cont.printWithType() + ", " + it.dest.printWithType() + "\n");
+    }
+    public void visit(binary it){
+        out.print("\t" + it.lhs + " = " + it.op + " " + it.lhs.irType + " " + it.op1 + ", " + it.op2 + "\n");
+    }
+    public void visit(unary it){}
+    public void visit(icmp it){
+        out.print("\t" + it.dest + " = icmp " + it.op + " " + it.dest.irType + " " + it.lhs + ", " + it.rhs + "\n");
+    }
+    public void visit(zext it){
+        out.print("\t" + it.dest + " = zext " + it.cont.printWithType() + " to " + it.dest.irType + "\n");
+    }
+    public void visit(call it){
+        out.print("\t" + it.returnReg + " = call " + it.returnReg.irType + " @" + it.functionName + "(");
+        boolean first = true;
+        for (entity e : it.paramList) {
+            if (first) first = false;
+            else out.print(", ");
+            out.print(e.printWithType());
+        }
+        out.print(")\n");
+    }
+    public void visit(getelementptr it){
+        out.print("\t" + it.dest + " = getelementptr " + it.ptrType + ", " + it.ptr.printWithType());
+        for (entity e : it.indexList) {
+            out.print(", " + e.printWithType());
+        }
+        out.print("\n");
+    }
+
+    public void visit(cast it) {
+        out.print("\t" + it.dest + " = bitcast " + it.val.printWithType() + " to " + it.dest.irType + "\n");
+    }
+
+    //terminal
+    public void visit(branch it){
+        out.print("\tbr " + it.op.printWithType() + ", label %" + it.trueBranch.label
+                + ", label %" + it.falseBranch.label + "\n");
+    }
+    public void visit(jump it){
+        out.print("\tbr label %" + it.destination.label + "\n");
+    }
+    public void visit(ret it){
+        out.print("\tret " + it.value.printWithType() + "\n");
+    }
+    public void visit(loop it){
+        out.print("\tbr label %" + it.condition.label + "\n");
+    }
+
+
+    /*
+    
     //statement
     public void visit(alloca it){
         out.print("\t%" + it.dest.reg_num + " = alloca " + it.dest.irType + "\n");
@@ -102,28 +165,10 @@ public class IRPrinter implements IRVisitor{
     }
 
 
-    //terminal
-    public void visit(branch it){
-        out.print("\tbr " + getWithType(it.op) + ", label %" + it.trueBranch.label
-                + ", label %" + it.falseBranch.label + "\n");
-    }
-    public void visit(jump it){
-        out.print("\tbr label %" + it.destination.label + "\n");
-    }
-    public void visit(ret it){
-        out.print("\tret " + getWithType(it.value) + "\n");
-    }
-    public void visit(loop it){
-        out.print("\tbr label %" + it.condition.label + "\n");
-    }
 
 
-    private String getWithType(entity e) {
-        return e.printWithType();
-    }
 
-    private String getEntity(entity e){
-        return e.toString();
-    }
 
+
+     */
 }
