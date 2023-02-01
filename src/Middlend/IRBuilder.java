@@ -206,13 +206,14 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(ForStmtNode it){
         currScope = new Scope(currScope);
-        block start = new block(++currFunc.block_cnt, currBlk), forBlock = new block(++currFunc.block_cnt, currBlk);
-        block destination = new block(++currFunc.block_cnt, start);
+        block start = new block(++currFunc.block_cnt, currBlk, "_for_cond"), forBlock = new block(++currFunc.block_cnt, currBlk, "_for_loop");
+        block destination = new block(++currFunc.block_cnt, start, "_for_next");
+
+        if (it.varDef != null) it.varDef.accept(this);
+        else if (it.init != null) it.init.accept(this);
         currBlk.push_back(new loop(start, forBlock));
 
         currBlk = start;
-        if (it.varDef != null) it.varDef.accept(this);
-        else if (it.init != null) it.init.accept(this);
         if (it.condition != null) {
             it.condition.accept(this);
             if (currBlk.tailStmt == null) currBlk.push_back(new branch(it.condition.val, forBlock, destination));
@@ -234,11 +235,11 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(IfStmtNode it){
         it.condition.accept(this);
-        block trueBranch = new block(++currFunc.block_cnt, currBlk);
+        block trueBranch = new block(++currFunc.block_cnt, currBlk, "_if_then");
         block destination;
 
         if (it.elseStmts == null) {
-            destination = new block(++currFunc.block_cnt, currBlk);
+            destination = new block(++currFunc.block_cnt, currBlk, "_if_next");
             currBlk.push_back(new branch(it.condition.val,trueBranch,destination));
             currBlk = trueBranch;
             currScope = new Scope(currScope);
@@ -248,8 +249,8 @@ public class IRBuilder implements ASTVisitor {
             currFunc.blocks.add(trueBranch);
             currFunc.blocks.add(destination);
         } else {
-            block falseBranch = new block(++currFunc.block_cnt, currBlk);
-            destination = new block(++currFunc.block_cnt, currBlk);
+            block falseBranch = new block(++currFunc.block_cnt, currBlk, "_if_else");
+            destination = new block(++currFunc.block_cnt, currBlk, "_if_next");
             currBlk.push_back(new branch(it.condition.val,trueBranch,falseBranch));
             currBlk = trueBranch;
             currScope = new Scope(currScope);
@@ -293,8 +294,8 @@ public class IRBuilder implements ASTVisitor {
     }
 
     public void visit(WhileStmtNode it){
-        block condition = new block(++currFunc.block_cnt, currBlk), whileBlock = new block(++currFunc.block_cnt, currBlk);
-        block destination = new block(++currFunc.block_cnt, condition);
+        block condition = new block(++currFunc.block_cnt, currBlk, "_while_cond"), whileBlock = new block(++currFunc.block_cnt, currBlk, "while_loop");
+        block destination = new block(++currFunc.block_cnt, condition, "_while_next");
         currBlk.push_back(new loop(condition, whileBlock));
         currScope = new Scope(currScope);
 
@@ -324,8 +325,13 @@ public class IRBuilder implements ASTVisitor {
     public void visit(AssignExprNode it) {
         it.lhs.accept(this);
         it.rhs.accept(this);
-        register r = createReg("", it.lhs.type);
-        currBlk.push_back(new load(r, it.rhs.val));
+        entity r;
+        if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
+            r = it.rhs.val;
+        } else {
+            r = createReg("", it.lhs.type);
+            currBlk.push_back(new load(r, it.rhs.val));
+        }
         currBlk.push_back(new store(it.lhs.val, r));
     }
 
@@ -363,48 +369,79 @@ public class IRBuilder implements ASTVisitor {
         it.rhs.accept(this);
         switch (it.op) {
             case "<", ">", "<=", ">=", "==", "!=" -> {
-                register l = createReg("", it.lhs.type), r = createReg("", it.rhs.type);
-                currBlk.push_back(new load(l, it.lhs.val));
-                currBlk.push_back(new load(r, it.rhs.val));
+                entity l, r;
+                if (it.lhs.val instanceof constant || !(it.lhs.val.irType instanceof IRPtr)) {
+                    l = it.lhs.val;
+                } else {
+                    l = createReg("", it.lhs.type);
+                    currBlk.push_back(new load(l, it.lhs.val));
+                }
+                if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
+                    r = it.rhs.val;
+                } else {
+                    r = createReg("", it.rhs.type);
+                    currBlk.push_back(new load(r, it.rhs.val));
+                }
                 register tmp = new register(new IRInt(1));
                 currBlk.push_back(new icmp(it.op, l, r, tmp));
-                it.val = new register(new IRInt(32));
-                currBlk.push_back(new zext(it.val, tmp));
+                it.val = tmp;
+                //it.val = new register(new IRInt(32));
+                //currBlk.push_back(new zext(it.val, tmp));
             }
             case "&&" -> {
-                register l = createReg("", it.lhs.type);
-                currBlk.push_back(new load(l, it.lhs.val));
+                entity l;
+                if (it.lhs.val instanceof constant || !(it.lhs.val.irType instanceof IRPtr)) {
+                    l = it.lhs.val;
+                } else {
+                    l = createReg("", it.lhs.type);
+                    currBlk.push_back(new load(l, it.lhs.val));
+                }
                 register d = new register(new IRInt(1));
                 currBlk.push_back(new icmp("ne", l, new consInt(0), d));
 
-                block rhs = new block(++currFunc.block_cnt, currBlk), dest = new block(++currFunc.block_cnt, currBlk);
+                block rhs = new block(++currFunc.block_cnt, currBlk, "_land_rhs"), dest = new block(++currFunc.block_cnt, currBlk, "_land_next");
                 currBlk.push_back(new branch(d, rhs, dest));
-                register r = createReg("", it.rhs.type);
-                rhs.push_back(new load(r, it.rhs.val));
+                entity r;
+                if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
+                    r = it.rhs.val;
+                } else {
+                    r = createReg("", it.rhs.type);
+                    rhs.push_back(new load(r, it.rhs.val));
+                }
                 rhs.push_back(new icmp("ne", r, new consInt(0), d));
                 rhs.push_back(new jump(dest));
-
-                it.val = new register(new IRInt(32));
-                dest.push_back(new zext(it.val, d));
+                it.val = d;
+                //it.val = new register(new IRInt(32));
+                //dest.push_back(new zext(it.val, d));
                 currBlk = dest;
                 currFunc.blocks.add(rhs);
                 currFunc.blocks.add(dest);
             }
             case "||" -> {
-                register l = createReg("", it.lhs.type);
-                currBlk.push_back(new load(l, it.lhs.val));
+                entity l;
+                if (it.lhs.val instanceof constant || !(it.lhs.val.irType instanceof IRPtr)) {
+                    l = it.lhs.val;
+                } else{
+                    l = createReg("", it.lhs.type);
+                    currBlk.push_back(new load(l, it.lhs.val));
+                }
                 register d = new register(new IRInt(1));
                 currBlk.push_back(new icmp("ne", l, new consInt(0), d));
 
-                block rhs = new block(++currFunc.block_cnt, currBlk), dest = new block(++currFunc.block_cnt, currBlk);
+                block rhs = new block(++currFunc.block_cnt, currBlk, "_lor_rhs"), dest = new block(++currFunc.block_cnt, currBlk, "_lor_next");
                 currBlk.push_back(new branch(d, dest, rhs));
-                register r = createReg("", it.rhs.type);
-                rhs.push_back(new load(r, it.rhs.val));
+                entity r;
+                if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
+                    r = it.rhs.val;
+                } else {
+                    r = createReg("", it.rhs.type);
+                    rhs.push_back(new load(r, it.rhs.val));
+                }
                 rhs.push_back(new icmp("ne", r, new consInt(0), d));
                 rhs.push_back(new jump(dest));
-
-                it.val = new register(new IRInt(32));
-                dest.push_back(new zext(it.val, d));
+                it.val = d;
+                //it.val = new register(new IRInt(32));
+                //dest.push_back(new zext(it.val, d));
                 currBlk = dest;
                 currFunc.blocks.add(rhs);
                 currFunc.blocks.add(dest);
@@ -430,12 +467,19 @@ public class IRBuilder implements ASTVisitor {
         call callFunc = new call((register) it.val, funcName);
         //todo
         //check builtin
-        for (ExprNode x : it.lists.exprs) {
-            x.accept(this);
-            register new_x = createReg("", x.type);
-            currBlk.push_back(new load(new_x, x.val));
-            callFunc.paramList.add(new_x);
+        if (it.lists != null) {
+            for (ExprNode x : it.lists.exprs) {
+                x.accept(this);
+                if (x.val instanceof constant || !(x.val.irType instanceof IRPtr)) {
+                    callFunc.paramList.add(x.val);
+                } else {
+                    register new_x = createReg("", x.type);
+                    currBlk.push_back(new load(new_x, x.val));
+                    callFunc.paramList.add(new_x);
+                }
+            }
         }
+
         currBlk.push_back(callFunc);
         it.val = callFunc.returnReg;
     }
@@ -483,15 +527,17 @@ public class IRBuilder implements ASTVisitor {
         //进入下一层
         if (loc + 1 < sizeList.size()) {
             //手捏一个for循环
-            block condition = new block(++currFunc.block_cnt, currBlk);
-            block forLoop = new block(++currFunc.block_cnt, currBlk);
-            block destination = new block(++currFunc.block_cnt, currBlk);
-            currBlk.push_back(new loop(condition, forLoop));
+            block condition = new block(++currFunc.block_cnt, currBlk, "_for_cond");
+            block forLoop = new block(++currFunc.block_cnt, currBlk, "_for_loop");
+            block destination = new block(++currFunc.block_cnt, currBlk, "_for_next");
 
-            currBlk = condition;
+
             register idx = new register(new IRPtr(new IRInt(32)));
             currBlk.push_back(new alloca(new IRInt(32), idx));
             currBlk.push_back(new store(idx, new consInt(1)));
+            currBlk.push_back(new loop(condition, forLoop));
+
+            currBlk = condition;
             register i = new register(new IRInt(32));
             register cond = new register(new IRInt(1));
             currBlk.push_back(new load(i, idx));
@@ -544,6 +590,7 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(UnaryExprNode it){
         //!还可以是bool型//!,~,+,-,++,--
+        //考虑常数直接计算？？
         //todo
         it.expr.accept(this);
         register d = createReg("", it.expr.type);

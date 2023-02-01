@@ -1,14 +1,14 @@
-int a = 1;
+int a;
 
-int func(){
-    return 0;
+int func(int x){
+    return x + 1;
 }
 
 int main(){
-   int a = 1;
-   int b = a;
-   for (int i = 0; i < 10; i++) {
-        a++;
+   int b;
+   b = a++;
+   while (a<b) {
+       b = func(b);
    }
 }
 

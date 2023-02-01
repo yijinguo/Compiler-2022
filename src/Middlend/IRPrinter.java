@@ -9,6 +9,7 @@ import MIR.Statmemt.*;
 import MIR.entity.*;
 import MIR.terminalStmt.*;
 import MIR.type.IRClass;
+import MIR.type.IRPtr;
 import MIR.type.IRType;
 
 public class IRPrinter implements IRVisitor{
@@ -48,7 +49,7 @@ public class IRPrinter implements IRVisitor{
 
 
     public void visit(function it){
-        out.print("define " + it.returnType + " " + it.funcName + "(");
+        out.print("define " + it.returnType + " @" + it.funcName + "(");
         boolean first = true;
         for (entity e : it.entities) {
             if (first) first = false;
@@ -57,11 +58,11 @@ public class IRPrinter implements IRVisitor{
         }
         out.print(") {\n");
         it.blocks.forEach(x->x.accept(this));
-        out.print("}\n");
+        out.print("}\n\n");
     }
 
     public void visit(block it){
-        if (it.label != 0) out.print(it.label + ":\n");
+        if (it.label != 0) out.print(it + ":\n");
         it.stmtList.forEach(x->x.accept(this));
         out.print("\n");
     }
@@ -71,7 +72,7 @@ public class IRPrinter implements IRVisitor{
         out.print("\t" + it.dest + " = alloca " + it.type + "\n");
     }
     public void visit(load it){
-        out.print("\t" + it.dest + " = load " + it.cont.irType + ", " + it.cont.irType + "* " + it.cont + "\n");
+        out.print("\t" + it.dest + " = load " + it.dest.irType + ", " + it.cont.printWithType() + "\n");
     }
     public void visit(store it){
         out.print("\tstore " + it.cont.printWithType() + ", " + it.dest.printWithType() + "\n");
@@ -81,7 +82,7 @@ public class IRPrinter implements IRVisitor{
     }
     public void visit(unary it){}
     public void visit(icmp it){
-        out.print("\t" + it.dest + " = icmp " + it.op + " " + it.dest.irType + " " + it.lhs + ", " + it.rhs + "\n");
+        out.print("\t" + it.dest + " = icmp " + it.op + " " + it.lhs.irType + " " + it.lhs + ", " + it.rhs + "\n");
     }
     public void visit(zext it){
         out.print("\t" + it.dest + " = zext " + it.cont.printWithType() + " to " + it.dest.irType + "\n");
@@ -110,17 +111,17 @@ public class IRPrinter implements IRVisitor{
 
     //terminal
     public void visit(branch it){
-        out.print("\tbr " + it.op.printWithType() + ", label %" + it.trueBranch.label
-                + ", label %" + it.falseBranch.label + "\n");
+        out.print("\tbr " + it.op.printWithType() + ", label %" + it.trueBranch
+                + ", label %" + it.falseBranch + "\n");
     }
     public void visit(jump it){
-        out.print("\tbr label %" + it.destination.label + "\n");
+        out.print("\tbr label %" + it.destination + "\n");
     }
     public void visit(ret it){
         out.print("\tret " + it.value.printWithType() + "\n");
     }
     public void visit(loop it){
-        out.print("\tbr label %" + it.condition.label + "\n");
+        out.print("\tbr label %" + it.condition + "\n");
     }
 
 
