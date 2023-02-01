@@ -61,18 +61,16 @@ public class Compiler {
             irPrinter.printIR(irBuilder);
 
             //ir to asm
-
-
+            /*
             InstSelector selector = new InstSelector(irBuilder);
             RegAlloca regAlloca = new RegAlloca(selector.program);
             regAlloca.work();
-
 
             PrintStream asm_out = new PrintStream(new FileOutputStream("output.s"));
             ASMPrinter asmPrinter = new ASMPrinter(asm_out);
             asmPrinter.print(selector.program);
             new BuiltinASMPrinter(asm_out);
-
+*/
         }catch (Error err){
 //            System.out.println(err.errorMsg());
             throw err;
