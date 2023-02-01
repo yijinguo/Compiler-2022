@@ -1,15 +1,8 @@
-int a;
-
-int func(int x){
-    return x + 1;
-}
+int a = 3;
 
 int main(){
-   int b;
-   b = a++;
-   while (a<b) {
-       b = func(b);
-   }
+    int a = 1, b = 2;
+    bool c = true;
 }
 
 /*

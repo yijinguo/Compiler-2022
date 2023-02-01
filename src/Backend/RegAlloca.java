@@ -5,6 +5,7 @@ import Assembly.Inst.*;
 import Assembly.Operand.*;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class RegAlloca {
 
@@ -16,7 +17,7 @@ public class RegAlloca {
     PhyReg Reg_sp = PhyReg.regMap.get("sp");
 
     int total, virtualRegBegin;
-    ArrayList<Inst> workList;
+    LinkedList<Inst> workList;
 
     public RegAlloca(ASMProgram it){
         this.program = it;
@@ -33,7 +34,7 @@ public class RegAlloca {
     }
 
     public void visitBlock(ASMBlock b){
-        workList = new ArrayList<>();
+        workList = new LinkedList<>();
         for (Inst inst : b.insts) {
             if (inst.rs1 != null && !(inst.rs1 instanceof PhyReg)) {
                 allocaCont(Reg_t1, inst.rs1);

@@ -3,12 +3,13 @@ package Assembly;
 import Assembly.Inst.Inst;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class ASMBlock {
     public String blockName;
-    public ArrayList<Inst> insts = new ArrayList<>();
+    public LinkedList<Inst> insts = new LinkedList<>();
     public ASMBlock headBlock = null;
-    public ArrayList<ASMBlock> tailBlock = new ArrayList<>();
+    public LinkedList<ASMBlock> tailBlock = new LinkedList<>();
 
     public ASMBlock(String name) {
         this.blockName = name;

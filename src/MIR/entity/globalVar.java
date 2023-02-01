@@ -16,16 +16,17 @@ public class globalVar extends register{
     }
 
     public void initial(){
-        if (irType instanceof IRInt) {
+        IRType tmp = ((IRPtr)irType).pointDown();
+        if (tmp instanceof IRInt) {
             switch (irType.size) {
                 case 4 -> init = new consInt(0);
                 case 1 -> init = new consBool(false);
                 default -> {}
             }
-        } else if (irType instanceof IRPtr) {
+        } else if (tmp instanceof IRPtr) {
             init = new consString("");
-        } else if (irType instanceof IRClass) {
-
+        } else if (tmp instanceof IRClass) {
+            init = null;
         }
     }
 

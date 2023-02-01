@@ -14,6 +14,7 @@ public class ASMPrinter {
     public void print(ASMProgram program){
         //todo
         program.globals.forEach(x->out.print(x));
+        program.functions.forEach(x->out.print(x));
     }
 
 }

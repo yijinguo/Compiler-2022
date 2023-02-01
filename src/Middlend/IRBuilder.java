@@ -76,6 +76,10 @@ public class IRBuilder implements ASTVisitor {
         return new register(name, transType(type));
     }
 
+    private boolean sameType(IRType irType, Type type){
+        return irType.name.equals(transType(type).name);
+    }
+
     public void visit(ClassDefNode it){
         currScope = new Scope(currScope, it);
         currClass = classTypes.get(it.name);
@@ -112,7 +116,7 @@ public class IRBuilder implements ASTVisitor {
         if (currClass != null) {
             IRPtr classPtr = new IRPtr(currClass);
             register thisVar = new register("this", classPtr), thisAddr = new register("this.addr", new IRPtr(classPtr));
-            currFunc.paraList.put("this", thisVar);
+            currFunc.paraList.add(thisVar);
             currBlk.push_back(new alloca(classPtr, thisAddr));
             currBlk.push_back(new store(thisVar, thisAddr));
             currScope.entities.put("this", thisAddr);
@@ -141,7 +145,7 @@ public class IRBuilder implements ASTVisitor {
         for (VarDefUnitNode x : it.varList) {
             x.accept(this);
             register reg = createReg(x.varName, x.type.type);
-            currFunc.paraList.put(x.varName, reg);
+            currFunc.paraList.add(reg);
             //currBlk.push_back(new store(reg, currScope.getEntity(x.varName)));
         }
     }
@@ -158,7 +162,19 @@ public class IRBuilder implements ASTVisitor {
             currScope.entities.put(it.varName, ptr);
             if (it.init != null) {
                 it.init.accept(this);
-                currBlk.push_back(new store(ptr, it.init.val));
+                entity tmp;
+                if (it.init.val instanceof constant || !(it.init.val.irType instanceof IRPtr)) {
+                    if (sameType(it.init.val.irType, it.type.type)) {
+                        tmp = it.init.val;
+                    } else {
+                        tmp = createReg("", it.type.type);
+                        currBlk.push_back(new zext(tmp, it.init.val));
+                    }
+                } else {
+                    tmp = createReg("", it.init.type);
+                    currBlk.push_back(new load(tmp, it.init.val));
+                }
+                currBlk.push_back(new store(ptr, tmp));
             }
         } else if (currClass != null) {
             currClass.add_member(it.varName, it.type.irType);
@@ -326,8 +342,15 @@ public class IRBuilder implements ASTVisitor {
         it.lhs.accept(this);
         it.rhs.accept(this);
         entity r;
-        if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
+        if (it.rhs.val instanceof constant ) {
             r = it.rhs.val;
+        } else if (!(it.rhs.val.irType instanceof IRPtr)) {
+            if (sameType(it.rhs.val.irType, it.lhs.type)) {
+                r = it.rhs.val;
+            } else {
+                r = createReg("", it.lhs.type);
+                currBlk.push_back(new zext(r, it.rhs.val));
+            }
         } else {
             r = createReg("", it.lhs.type);
             currBlk.push_back(new load(r, it.rhs.val));
@@ -361,27 +384,134 @@ public class IRBuilder implements ASTVisitor {
 
     }
 
+
+    private register icmpString(String cmpName, entity lhs, entity rhs){
+        register dest = new register(new IRInt(1)), tmp = new register(new IRInt(8)); //cond
+        currBlk.push_back(new call(tmp, cmpName, lhs, rhs));
+        currBlk.push_back(new trunc(dest, tmp));
+        return dest;
+    }
+
     public void visit(BinaryExprNode it){
         //还可以是string型
         //考虑bool型
         //todo
         it.lhs.accept(this);
         it.rhs.accept(this);
+
+        entity l, r;
+        if (it.lhs.val instanceof constant || !(it.lhs.val.irType instanceof IRPtr)) {
+            l = it.lhs.val;
+        } else {
+            l = createReg("", it.lhs.type);
+            currBlk.push_back(new load(l, it.lhs.val));
+        }
+        if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
+            r = it.rhs.val;
+        } else {
+            r = createReg("", it.rhs.type);
+            currBlk.push_back(new load(r, it.rhs.val));
+        }
+
+        //string
+        if (it.lhs.type.typeName.equals("string")) {
+            switch (it.op) {
+                case "+" -> {
+                    it.val = new register(new IRPtr(new IRInt(8)));
+                    currBlk.push_back(new call((register) it.val, "__str_add", l, r));
+                }
+                case "==" -> it.val = icmpString("__str_eq", l, r);
+                case "!=" -> it.val = icmpString("__str_ne", l, r);
+                case "<" -> it.val = icmpString("__str_slt", l, r);
+                case "<=" -> it.val = icmpString("__str_sle", l, r);
+                case ">" -> it.val = icmpString("__str_sgt", l, r);
+                case ">=" -> it.val = icmpString("__str_sge", l, r);
+                default -> {}
+            }
+            return;
+        }
+
+        if (l instanceof constant && r instanceof constant) {
+            switch (it.op) {
+                case "+" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value + ((consInt) r).value);
+                }
+                case "-" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value - ((consInt) r).value);
+                }
+                case "*" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value * ((consInt) r).value);
+                }
+                case "/" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value / ((consInt) r).value);
+                }
+                case "%" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value % ((consInt) r).value);
+                }
+                case "<<" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value << ((consInt) r).value);
+                }
+                case ">>" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value >> ((consInt) r).value);
+                }
+                case "&" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value & ((consInt) r).value);
+                }
+                case "^" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value ^ ((consInt) r).value);
+                }
+                case "|" -> {
+                    if (l instanceof consInt)
+                        it.val = new consInt(((consInt) l).value | ((consInt) r).value);
+                }
+                case "&&" -> {
+                    if (l instanceof consInt)
+                        it.val = new consCondition(((consInt) l).value != 0 && ((consInt) r).value != 0);
+                }
+                case "||" -> {
+                    if (l instanceof consInt)
+                        it.val = new consCondition(((consInt) l).value != 0 || ((consInt) r).value != 0);
+                }
+                case "<" -> {
+                    if (l instanceof consInt)
+                        it.val = new consCondition(((consInt) l).value < ((consInt) r).value);
+                }
+                case ">" -> {
+                    if (l instanceof consInt)
+                        it.val = new consCondition(((consInt) l).value > ((consInt) r).value);
+                }
+                case "<=" -> {
+                    if (l instanceof consInt)
+                        it.val = new consCondition(((consInt) l).value <= ((consInt) r).value);
+                }
+                case ">=" -> {
+                    if (l instanceof consInt)
+                        it.val = new consCondition(((consInt) l).value >= ((consInt) r).value);
+                }
+                case "==" -> {
+                    if (l instanceof consInt)
+                        it.val = new consCondition(((consInt) l).value == ((consInt) r).value);
+                }
+                case "!=" -> {
+                    if (l instanceof consInt)
+                        it.val = new consCondition(((consInt) l).value != ((consInt) r).value);
+                }
+                default -> {}
+            }
+            return;
+        }
+
         switch (it.op) {
             case "<", ">", "<=", ">=", "==", "!=" -> {
-                entity l, r;
-                if (it.lhs.val instanceof constant || !(it.lhs.val.irType instanceof IRPtr)) {
-                    l = it.lhs.val;
-                } else {
-                    l = createReg("", it.lhs.type);
-                    currBlk.push_back(new load(l, it.lhs.val));
-                }
-                if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
-                    r = it.rhs.val;
-                } else {
-                    r = createReg("", it.rhs.type);
-                    currBlk.push_back(new load(r, it.rhs.val));
-                }
                 register tmp = new register(new IRInt(1));
                 currBlk.push_back(new icmp(it.op, l, r, tmp));
                 it.val = tmp;
@@ -389,60 +519,39 @@ public class IRBuilder implements ASTVisitor {
                 //currBlk.push_back(new zext(it.val, tmp));
             }
             case "&&" -> {
-                entity l;
-                if (it.lhs.val instanceof constant || !(it.lhs.val.irType instanceof IRPtr)) {
-                    l = it.lhs.val;
-                } else {
-                    l = createReg("", it.lhs.type);
-                    currBlk.push_back(new load(l, it.lhs.val));
-                }
-                register d = new register(new IRInt(1));
-                currBlk.push_back(new icmp("ne", l, new consInt(0), d));
+                register tmp1 = new register(new IRInt(1));
+                currBlk.push_back(new icmp("ne", l, new consInt(0), tmp1));
 
                 block rhs = new block(++currFunc.block_cnt, currBlk, "_land_rhs"), dest = new block(++currFunc.block_cnt, currBlk, "_land_next");
-                currBlk.push_back(new branch(d, rhs, dest));
-                entity r;
-                if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
-                    r = it.rhs.val;
-                } else {
-                    r = createReg("", it.rhs.type);
-                    rhs.push_back(new load(r, it.rhs.val));
-                }
-                rhs.push_back(new icmp("ne", r, new consInt(0), d));
+                currBlk.push_back(new branch(tmp1, rhs, dest));
+
+                register tmp2 = new register(new IRInt(1));
+                rhs.push_back(new icmp("ne", r, new consInt(0), tmp2));
                 rhs.push_back(new jump(dest));
-                it.val = d;
+
                 //it.val = new register(new IRInt(32));
                 //dest.push_back(new zext(it.val, d));
                 currBlk = dest;
+                it.val = new register(new IRInt(1));
+                currBlk.push_back(new icmp("eq", tmp1, tmp2, it.val));
                 currFunc.blocks.add(rhs);
                 currFunc.blocks.add(dest);
             }
             case "||" -> {
-                entity l;
-                if (it.lhs.val instanceof constant || !(it.lhs.val.irType instanceof IRPtr)) {
-                    l = it.lhs.val;
-                } else{
-                    l = createReg("", it.lhs.type);
-                    currBlk.push_back(new load(l, it.lhs.val));
-                }
-                register d = new register(new IRInt(1));
-                currBlk.push_back(new icmp("ne", l, new consInt(0), d));
+                register tmp1 = new register(new IRInt(1));
+                currBlk.push_back(new icmp("ne", l, new consInt(0), tmp1));
 
                 block rhs = new block(++currFunc.block_cnt, currBlk, "_lor_rhs"), dest = new block(++currFunc.block_cnt, currBlk, "_lor_next");
-                currBlk.push_back(new branch(d, dest, rhs));
-                entity r;
-                if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
-                    r = it.rhs.val;
-                } else {
-                    r = createReg("", it.rhs.type);
-                    rhs.push_back(new load(r, it.rhs.val));
-                }
-                rhs.push_back(new icmp("ne", r, new consInt(0), d));
+                currBlk.push_back(new branch(tmp1, dest, rhs));
+                register tmp2 = new register(new IRInt(1));
+                rhs.push_back(new icmp("ne", r, new consInt(0), tmp2));
                 rhs.push_back(new jump(dest));
-                it.val = d;
+
                 //it.val = new register(new IRInt(32));
                 //dest.push_back(new zext(it.val, d));
                 currBlk = dest;
+                it.val = new register(new IRInt(1));
+                currBlk.push_back(new icmp("ne", tmp1, tmp2, it.val));
                 currFunc.blocks.add(rhs);
                 currFunc.blocks.add(dest);
             }
@@ -458,13 +567,13 @@ public class IRBuilder implements ASTVisitor {
     }
 
     public void visit(FuncExprNode it){
+        call callFunc;
         String funcName;
         if (it.funcName instanceof MemberExprNode)
-            funcName = ((MemberExprNode) it.funcName).name.str + "." + ((MemberExprNode) it.funcName).member;
+            callFunc = new call((register) it.val, ((MemberExprNode) it.funcName).member, ((MemberExprNode) it.funcName).name.str);
         else
-            funcName = it.funcName.str;
+            callFunc = new call((register) it.val, it.funcName.str);
         it.val = createReg("", it.type);
-        call callFunc = new call((register) it.val, funcName);
         //todo
         //check builtin
         if (it.lists != null) {
@@ -486,6 +595,8 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(LambdaExprNode it){}
     public void visit(MemberExprNode it){ //函数调用不跑这个函数，只涉及变量调用
+        //todo
+        //考虑内置函数size:返回数组的大小
         it.name.accept(this);
         IRType realType = ((IRPtr) it.name.val.irType).pointDown(); //给name的type降级
         if (realType instanceof IRClass) {
@@ -573,9 +684,10 @@ public class IRBuilder implements ASTVisitor {
             currBlk.push_back(new call(callReg, "malloc", new consInt(classType.size)));
             it.val = new register(type);
             currBlk.push_back(new bitcast(it.val, callReg));
-            if (classType.have_build)
+            if (classType.have_build) {
                 currBlk.push_back(new call(new register(new IRVoid()), classType.name + "." + classType.name));
                 //currBlk.push_back(new call(new register(new IRVoid()), classType.name + "." + classType.name, it.val));
+            }
         }
     }
 
@@ -598,11 +710,10 @@ public class IRBuilder implements ASTVisitor {
         switch (it.op) {
             case "!" -> {
                 register t1 = new register(new IRInt(1));
-                register t2 = new register(new IRInt(1));
-                it.val = createReg("", it.type);
+                it.val = new register(new IRInt(1));
                 currBlk.push_back(new icmp("ne", d, new consInt(0), t1));
-                currBlk.push_back(new binary("^", t1, new consBool(true), t2));
-                currBlk.push_back(new zext(it.val, t2));
+                currBlk.push_back(new binary("^", t1, new consBool(true), it.val));
+                //currBlk.push_back(new zext(it.val, t2));
                 //currBlk.push_back(new unary("seqz", new consInt(0), d, it.val));
             }
             case "~" -> {

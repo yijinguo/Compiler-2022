@@ -6,7 +6,7 @@ import MIR.entity.*;
 public class icmp extends statement{
 
     enum icmpInst{
-        slt, sqt, sle, sge, eq, ne
+        slt, sgt, sle, sge, eq, ne
     }
 
     public String op;
@@ -20,12 +20,14 @@ public class icmp extends statement{
         this.dest = dest;
         switch (op) {
             case "<" -> this.op = "slt";
-            case ">" -> this.op = "sqt";
+            case ">" -> this.op = "sgt";
             case "<=" -> this.op = "sle";
             case ">=" -> this.op = "sge";
             case "==" -> this.op = "eq";
             case "!=" -> this.op = "ne";
-            default -> {}
+            default -> {
+                this.op = op;
+            }
         }
     }
 

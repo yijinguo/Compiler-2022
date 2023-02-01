@@ -8,6 +8,7 @@ import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
 import Middlend.IRBuilder;
 import Middlend.IRPrinter;
+import Util.BuiltinASMPrinter;
 import Util.Scope.globalScope;
 import Util.MxErrorListener;
 import org.antlr.v4.runtime.CharStreams;
@@ -25,9 +26,9 @@ public class Compiler {
 
     public static void main(String[] args) throws Exception{
         //String name="src/testcase.mx";
-        String name = "src/myself.mx";
-        InputStream input=new FileInputStream(name);
-        //InputStream input = System.in;
+        //String name = "src/myself.mx";
+        //InputStream input=new FileInputStream(name);
+        InputStream input = System.in;
         try {
             RootNode root;
             globalScope GlobalScope=new globalScope(null);
@@ -60,15 +61,18 @@ public class Compiler {
             irPrinter.printIR(irBuilder);
 
             //ir to asm
-            /*
+
+
             InstSelector selector = new InstSelector(irBuilder);
             RegAlloca regAlloca = new RegAlloca(selector.program);
             regAlloca.work();
 
+
             PrintStream asm_out = new PrintStream(new FileOutputStream("output.s"));
             ASMPrinter asmPrinter = new ASMPrinter(asm_out);
             asmPrinter.print(selector.program);
-             */
+            new BuiltinASMPrinter(asm_out);
+
         }catch (Error err){
 //            System.out.println(err.errorMsg());
             throw err;

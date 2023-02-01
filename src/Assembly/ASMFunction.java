@@ -11,7 +11,7 @@ public class ASMFunction {
     public ArrayList<Reg> params = new ArrayList<>();
 
     public int totalStack = 0;
-    public int paramsUsed = 0, allocaUsed = 0;
+    public int paramsUsed = 0, allocaUsed = 0, virtualRegCnt = 0;
 
     public ASMFunction(String name){
         this.funcName = name;
@@ -26,10 +26,11 @@ public class ASMFunction {
     }
 
     public String toString(){
-        String ret = funcName;
+        String ret = funcName + ":\n";
         for (ASMBlock b : Blocks) {
-            ret += b;
+            ret += b.print();
         }
+        ret += "\n";
         return ret;
     }
 

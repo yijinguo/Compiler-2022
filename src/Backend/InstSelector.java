@@ -8,6 +8,8 @@ import Assembly.Operand.*;
 import MIR.Statmemt.*;
 import MIR.entity.*;
 import MIR.terminalStmt.*;
+import MIR.type.IRClass;
+import MIR.type.IRInt;
 import MIR.type.IRVoid;
 import Middlend.IRBuilder;
 import MIR.*;
@@ -70,20 +72,55 @@ public class InstSelector implements IRVisitor {
 
     public void visit(function it){
         currFunc = new ASMFunction(it.funcName);
-        //todo
-        //paramsUsed
         blockList.clear();
-        int l = 0;
-        for (block b : it.blocks) blockList.put(b, new ASMBlock(b.label == 0 ? "" : ".LBB1_" + (++l)));
-        it.blocks.forEach(x->x.accept(this));
+        VirtualReg.cnt = 0;
+
+        int maxCnt = 0;
+        for (block blk : it.blocks) {
+            blockList.put(blk, new ASMBlock(".L" + blk.label));
+            for (statement inst : blk.stmtList)
+                if (inst instanceof call)
+                    maxCnt = Math.max(maxCnt, ((call) inst).paramList.size());
+        }
+        currFunc.paramsUsed = (maxCnt > 8 ? maxCnt - 8 : 0) << 2;
+
+        for (int i = 0; i < it.paraList.size(); ++i) {
+            if (i < 8) {
+                it.paraList.get(i).asmReg = PhyReg.regMap.get("a" + i);
+            } else {
+                it.paraList.get(i).asmReg = new VirtualReg(i);
+            }
+        }
+
+        for (int i = 0; i < it.blocks.size(); ++i) {
+            currBlk = blockList.get(it.blocks.get(i));
+            if (i == 0)
+                StoreReg(4, PhyReg.regMap.get("ra"), PhyReg.regMap.get("sp"), currFunc.paramsUsed);
+            it.blocks.get(i).accept(this);
+            currFunc.Blocks.add(currBlk);
+            currBlk = null;
+        }
+        currFunc.virtualRegCnt = VirtualReg.cnt;
+        currFunc.totalStack = currFunc.paramsUsed + currFunc.allocaUsed + currFunc.virtualRegCnt * 4;
+
+        if (currFunc.totalStack < 1 << 11) {
+            currFunc.Blocks.get(0).insts.addFirst(new Unary("addi", PhyReg.regMap.get("sp"),
+                    PhyReg.regMap.get("sp"), new Imm(-currFunc.totalStack)));
+            currFunc.Blocks.get(currFunc.Blocks.size() - 1).insts.add(new Unary("addi", PhyReg.regMap.get("sp"),
+                    PhyReg.regMap.get("sp"), new Imm(currFunc.totalStack)));
+        } else {
+            currFunc.Blocks.get(0).insts.addFirst(new Binary("add", PhyReg.regMap.get("sp"),
+                    PhyReg.regMap.get("sp"), new VirtualImm(-currFunc.totalStack)));
+            currFunc.Blocks.get(currFunc.Blocks.size() - 1).insts.add(new Binary("add", PhyReg.regMap.get("sp"),
+                    PhyReg.regMap.get("sp"), new VirtualImm(currFunc.totalStack)));
+            currFunc.Blocks.get(currFunc.Blocks.size() - 1).insts.add(new Ret());
+        }
 
         program.functions.add(currFunc);
         currFunc = null;
     }
     public void visit(block it){
-        currBlk = blockList.get(it);
         it.stmtList.forEach(x->x.accept(this));
-        currBlk = null;
     }
 
     //statement
@@ -99,16 +136,29 @@ public class InstSelector implements IRVisitor {
         StoreReg(it.cont.irType.size, getReg(it.cont), getReg(it.dest), 0);
     }
     public void visit(binary it){
-        currBlk.addInst(new Binary(it.op, getReg(it.lhs), getReg(it.op1), getReg(it.op2)));
+        switch (it.op) {
+            case "add", "and", "or", "xor": {
+                if (it.op1 instanceof consInt) {
+                    entity tmp = it.op1;
+                    it.op1 = it.op2;
+                    it.op2 = tmp;
+                }
+                if (it.op2 instanceof consInt && ((consInt) it.op2).value < 1<<11
+                        && ((consInt) it.op2).value >= -(1<<11)) {
+                    currBlk.addInst(new Unary(it.op, getReg(it.lhs), getReg(it.op1), new Imm(((consInt) it.op2).value)));
+                    return;
+                }
+            }
+            default:
+                currBlk.addInst(new Binary(it.op, getReg(it.lhs), getReg(it.op1), getReg(it.op2)));
+        }
     }
-    public void visit(unary it){
-        currBlk.addInst(new Unary(it.op, getReg(it.dest), getReg(it.cont), new Imm(((consInt)it.cons).value)));
-    }
+
     public void visit(icmp it){
         VirtualReg tmp = new VirtualReg(4);
         switch (it.op) {
             case "slt" -> currBlk.addInst(new Binary("slt", getReg(it.dest), getReg(it.lhs), getReg(it.rhs)));
-            case "sqt" -> currBlk.addInst(new Binary("slt", getReg(it.dest), getReg(it.rhs), getReg(it.lhs)));
+            case "sgt" -> currBlk.addInst(new Binary("slt", getReg(it.dest), getReg(it.rhs), getReg(it.lhs)));
             case "sle" -> {
                 currBlk.addInst(new Binary("slt", tmp, getReg(it.rhs), getReg(it.lhs)));
                 currBlk.addInst(new Unary("xori", getReg(it.dest), tmp, new Imm(1)));
@@ -135,8 +185,6 @@ public class InstSelector implements IRVisitor {
             if (i < 8) {
                 currBlk.addInst(new Mv(PhyReg.regMap.get("a" + i), getReg(e)));
             } else {
-                //todo
-                //不确定，再看看
                 StoreReg(e.irType.size, getReg(e), PhyReg.regMap.get("sp"), i - 8 << 2);
             }
         }
@@ -145,9 +193,18 @@ public class InstSelector implements IRVisitor {
             currBlk.addInst(new Mv(getReg(it.returnReg), PhyReg.regMap.get("a0")));
     }
     public void visit(getelementptr it){
-
+        if (it.ptrType instanceof IRInt && it.ptrType.size == 1) {
+            currBlk.addInst(new Binary("add", getReg(it.dest), getReg(it.ptr), getReg(it.indexList.get(0))));
+        } else {
+            Reg idx = it.ptrType instanceof IRClass ? getReg(it.indexList.get(1)) : getReg(it.indexList.get(0));
+            VirtualReg t = new VirtualReg(4);
+            currBlk.addInst(new Unary("slli", t, idx, new Imm(2)));
+            currBlk.addInst(new Binary("add", getReg(it.dest), getReg(it.ptr), t));
+        }
     }
-    public void visit(cast it){}
+    public void visit(cast it){
+        currBlk.addInst(new Mv(getReg(it.dest), getReg(it.val)));
+    }
 
     //terminal
     public void visit(branch it){

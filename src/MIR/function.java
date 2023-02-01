@@ -12,7 +12,7 @@ public class function{
     public IRType returnType;
     public entity returnReg;
     public String funcName;
-    public HashMap<String, register> paraList = new HashMap<>();
+    public ArrayList<register> paraList = new ArrayList<>();
     public LinkedList<entity> entities = new LinkedList<>();
     public block rootBlock = null;
     public ArrayList<block> blocks = new ArrayList<>();

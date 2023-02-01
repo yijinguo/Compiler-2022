@@ -13,7 +13,6 @@ public interface IRVisitor {
     public void visit(load it);
     public void visit(store it);
     public void visit(binary it);
-    public void visit(unary it);
     public void visit(icmp it);
     public void visit(zext it);
     public void visit(call it);

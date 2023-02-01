@@ -78,17 +78,20 @@ public class IRPrinter implements IRVisitor{
         out.print("\tstore " + it.cont.printWithType() + ", " + it.dest.printWithType() + "\n");
     }
     public void visit(binary it){
-        out.print("\t" + it.lhs + " = " + it.op + " " + it.lhs.irType + " " + it.op1 + ", " + it.op2 + "\n");
+        //if (!it.isConst)
+            out.print("\t" + it.lhs + " = " + it.op + " " + it.lhs.irType + " " + it.op1 + ", " + it.op2 + "\n");
     }
-    public void visit(unary it){}
+
     public void visit(icmp it){
-        out.print("\t" + it.dest + " = icmp " + it.op + " " + it.lhs.irType + " " + it.lhs + ", " + it.rhs + "\n");
+        //if (!it.isConst)
+            out.print("\t" + it.dest + " = icmp " + it.op + " " + it.lhs.irType + " " + it.lhs + ", " + it.rhs + "\n");
     }
     public void visit(zext it){
         out.print("\t" + it.dest + " = zext " + it.cont.printWithType() + " to " + it.dest.irType + "\n");
     }
     public void visit(call it){
-        out.print("\t" + it.returnReg + " = call " + it.returnReg.irType + " @" + it.functionName + "(");
+        String funcName = (it.className == null ? it.functionName : it.className + "." + it.functionName);
+        out.print("\t" + it.returnReg + " = call " + it.returnReg.irType + " @" + funcName + "(");
         boolean first = true;
         for (entity e : it.paramList) {
             if (first) first = false;
@@ -108,6 +111,7 @@ public class IRPrinter implements IRVisitor{
     public void visit(cast it) {
         out.print("\t" + it.dest + " = bitcast " + it.val.printWithType() + " to " + it.dest.irType + "\n");
     }
+
 
     //terminal
     public void visit(branch it){
