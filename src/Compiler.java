@@ -55,13 +55,14 @@ public class Compiler {
 
             //ast to ir
 
+            /*
             IRBuilder irBuilder = new IRBuilder(GlobalScope);
             irBuilder.visit(root);
             PrintStream ir_out = new PrintStream(new FileOutputStream("output.ll"));
             IRPrinter irPrinter = new IRPrinter(ir_out);
             irPrinter.printIR(irBuilder);
             new BuiltinIRPrinter(ir_out);
-
+*/
             //ir to asm
             /*
             InstSelector selector = new InstSelector(irBuilder);
