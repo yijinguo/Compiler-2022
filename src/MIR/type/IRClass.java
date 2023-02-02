@@ -4,16 +4,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import MIR.*;
+import MIR.entity.*;
 
 public class IRClass extends IRType{
 
+    public String className;
     public ArrayList<IRType> memberType = new ArrayList<>();
     public HashMap<String, Integer> memberMap = new HashMap<>();
-    public boolean have_build = false;
-    public function build = null;
+    public function build;
 
     public IRClass(String name, int size){
         super("%class." + name, size);
+        this.className = name;
+        build = new function(new IRVoid(), name + ".build");
     }
 
     public void add_member(String name, IRType type){
@@ -22,7 +25,7 @@ public class IRClass extends IRType{
     }
 
     public IRType get_member(String name){
-        return memberMap.containsKey(name) ? null : memberType.get(memberMap.get(name));
+        return memberMap.containsKey(name) ? memberType.get(memberMap.get(name)) : null;
     }
 
     public void calc_size() {

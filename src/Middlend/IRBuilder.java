@@ -3,7 +3,6 @@ package Middlend;
 import AST.*;
 import AST.expr.*;
 import AST.stmt.*;
-import Assembly.Inst.Store;
 import MIR.entity.*;
 import MIR.terminalStmt.*;
 import MIR.type.IRInt;
@@ -24,6 +23,7 @@ public class IRBuilder implements ASTVisitor {
     private block currBlk = null;
     private function currFunc = null;
     private IRClass currClass = null;
+    private register currClassReg = null;
 
     public function mainFn = null;
     public boolean isMain = false;
@@ -44,10 +44,10 @@ public class IRBuilder implements ASTVisitor {
             }
         });
         it.DefList.forEach(x->{
-            if (x instanceof ClassDefNode) x.accept(this);
+            if (x instanceof VarDefNode) x.accept(this);
         });
         it.DefList.forEach(x->{
-            if (x instanceof VarDefNode) x.accept(this);
+            if (x instanceof ClassDefNode) x.accept(this);
         });
         it.DefList.forEach(x->{
             if (x instanceof FuncDefNode) x.accept(this);
@@ -72,8 +72,9 @@ public class IRBuilder implements ASTVisitor {
         return res;
     }
 
-    private register createReg(String name, Type type){
-        return new register(name, transType(type));
+    private register createReg(String name, Type type, boolean ptr){ //ptr:true建指针
+        if (transType(type) instanceof IRVoid) return null;
+        return new register(name, ptr ? new IRPtr(transType(type)) : transType(type));
     }
 
     private boolean sameType(IRType irType, Type type){
@@ -86,8 +87,13 @@ public class IRBuilder implements ASTVisitor {
         it.varList.forEach(x->x.accept(this));
         currClass.calc_size();
         if (it.classBuilder != null) {
-            currClass.have_build = true;
             it.classBuilder.accept(this);
+        } else {
+            functions.put(currClass.build.funcName, currClass.build);
+            register tmp = new register(new IRPtr(currClass));
+            tmp.reg_num = 0;
+            currClass.build.paraList.add(tmp);
+            currClass.build.rootBlock.push_back(new ret(new consNull()));
         }
         it.funcList.forEach(x->x.accept(this));
         currScope = currScope.parentScope;
@@ -95,33 +101,53 @@ public class IRBuilder implements ASTVisitor {
     }
 
     public void visit(ClassBuildNode it){
-        //todo
-        //需要进一步修改
-        currFunc = new function(new IRVoid(), currClass.name + "_" + it.name);
+        register.reg_cnt = -1;
+        currFunc = currClass.build;
+        register _this = new register(new IRPtr(currClass));
+        currFunc.paraList.add(_this);
+        register.reg_cnt++;
+        currBlk = currFunc.rootBlock;
+        register tmp = new register(new IRPtr(new IRPtr(currClass)));
+        currBlk.push_back(new alloca(new IRPtr(currClass), tmp));
+        currBlk.push_back(new store(tmp, _this));
+        currClassReg = new register(new IRPtr(currClass));
+        currBlk.push_back(new load(currClassReg, tmp));
+
         it.suites.accept(this);
+        currBlk.push_back(new ret(new consNull()));
         currClass.build = currFunc;
+        functions.put(currFunc.funcName, currFunc);
         currFunc = null;
     }
 
     public void visit(FuncDefNode it){
-        register.reg_cnt = 0;
+        currScope = new Scope(currScope);
+        register.reg_cnt = -1;
         it.returnType.accept(this);
-        if (currClass != null) {
-            currFunc = new function(it.returnType.irType, currClass.name + "." + it.funcName);
-        } else {
-            currFunc = new function(it.returnType.irType, it.funcName);
-        }
+        String funcName = currClass == null ? it.funcName : currClass.className + "." + it.funcName;
+        currFunc = new function(it.returnType.irType, funcName);
         currBlk = currFunc.rootBlock;
 
         if (currClass != null) {
             IRPtr classPtr = new IRPtr(currClass);
-            register thisVar = new register("this", classPtr), thisAddr = new register("this.addr", new IRPtr(classPtr));
+            register thisVar = new register("this", classPtr);
             currFunc.paraList.add(thisVar);
+            if (it.params != null)
+                it.params.accept(this);
+            else
+                register.reg_cnt++;
+            register thisAddr = new register("this.addr", new IRPtr(classPtr));
             currBlk.push_back(new alloca(classPtr, thisAddr));
-            currBlk.push_back(new store(thisVar, thisAddr));
+            currBlk.push_back(new store(thisAddr, thisVar));
+            currClassReg = new register(classPtr);
+            currBlk.push_back(new load(currClassReg, thisAddr));
             currScope.entities.put("this", thisAddr);
+        } else {
+            if (it.params != null)
+                it.params.accept(this);
+            else
+                register.reg_cnt++;
         }
-        if (it.params != null) it.params.accept(this);
 
         functions.put(currFunc.funcName, currFunc);
         if (currFunc.funcName.equals("main")) {
@@ -129,7 +155,6 @@ public class IRBuilder implements ASTVisitor {
             mainFn = currFunc;
         }
 
-        currScope = new Scope(currScope);
         it.stmts.forEach(x -> x.accept(this));
         if (currFunc.returnReg == null) {
             currFunc.returnReg = isMain ? new consInt(0) : new consNull();
@@ -143,11 +168,19 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(ParameterListNode it){
         for (VarDefUnitNode x : it.varList) {
-            x.accept(this);
-            register reg = createReg(x.varName, x.type.type);
+            //x.accept(this);
+            register reg = createReg(x.varName, x.type.type, false);
             currFunc.paraList.add(reg);
-            //currBlk.push_back(new store(reg, currScope.getEntity(x.varName)));
         }
+        register.reg_cnt++;
+        for (register e : currFunc.paraList) {
+            if (e.irType instanceof IRPtr && ((IRPtr)e.irType).pointDown() instanceof IRClass) continue;
+            register t = new register(new IRPtr(e.irType));
+            currBlk.push_back(new alloca(e.irType, t));
+            currBlk.push_back(new store(t,e));
+            currScope.entities.put(e.identity, t);
+        }
+
     }
 
     public void visit(VarDefNode it){
@@ -158,21 +191,25 @@ public class IRBuilder implements ASTVisitor {
         it.type.accept(this);
         if (currFunc != null) {
             register ptr = new register(it.varName+".addr", new IRPtr(it.type.irType));
-            currBlk.push_back(new alloca(transType(it.type.type), ptr));
+            IRType thisType = transType(it.type.type);
+            currBlk.push_back(new alloca(thisType, ptr));
             currScope.entities.put(it.varName, ptr);
+            if (thisType instanceof IRClass) {
+                currBlk.push_back(new call(null, ((IRClass) thisType).build.funcName, ptr));
+            }
             if (it.init != null) {
                 it.init.accept(this);
                 entity tmp;
-                if (it.init.val instanceof constant || !(it.init.val.irType instanceof IRPtr)) {
-                    if (sameType(it.init.val.irType, it.type.type)) {
-                        tmp = it.init.val;
-                    } else {
-                        tmp = createReg("", it.type.type);
-                        currBlk.push_back(new zext(tmp, it.init.val));
-                    }
+                if (sameType(it.init.val.irType, it.type.type)) {
+                    tmp = it.init.val;
                 } else {
-                    tmp = createReg("", it.init.type);
-                    currBlk.push_back(new load(tmp, it.init.val));
+                    if (!(it.init.val.irType instanceof IRPtr)) {
+                        tmp = createReg("", it.type.type, false);
+                        currBlk.push_back(new zext(tmp, it.init.val));
+                    } else {
+                        tmp = createReg("", it.init.type, false);
+                        currBlk.push_back(new load(tmp, it.init.val));
+                    }
                 }
                 currBlk.push_back(new store(ptr, tmp));
             }
@@ -294,11 +331,11 @@ public class IRBuilder implements ASTVisitor {
                 currFunc.returnReg = new consNull();
         } else {
             it.expr.accept(this);
-            if (it.expr.val instanceof constant) {
+            if (it.expr.val instanceof constant || it.expr.val.irType.name.equals(currFunc.returnType.name)) {
                 currFunc.returnReg = it.expr.val;
             } else {
                 currFunc.returnReg = new register(currFunc.returnType);
-                currBlk.push_back(new store(currFunc.returnReg, it.expr.val));
+                currBlk.push_back(new load(currFunc.returnReg, it.expr.val));
             }
         }
 
@@ -334,26 +371,32 @@ public class IRBuilder implements ASTVisitor {
     public void visit(ArrayExprNode it){
         it.arrayName.accept(this);
         it.index.accept(this);
-        it.val = createReg("", it.arrayName.type);
-        currBlk.push_back(new getelementptr(it.val, it.arrayName.val, it.index.val));
+        register tmp = createReg("", it.arrayName.type, false);
+        currBlk.push_back(new load(tmp, it.arrayName.val));
+        it.val = createReg("", it.arrayName.type, false);
+        currBlk.push_back(new getelementptr(it.val, tmp, it.index.val));
     }
 
     public void visit(AssignExprNode it) {
         it.lhs.accept(this);
         it.rhs.accept(this);
         entity r;
-        if (it.rhs.val instanceof constant ) {
+        if (it.rhs.val instanceof consNull) {
             r = it.rhs.val;
-        } else if (!(it.rhs.val.irType instanceof IRPtr)) {
-            if (sameType(it.rhs.val.irType, it.lhs.type)) {
-                r = it.rhs.val;
-            } else {
-                r = createReg("", it.lhs.type);
-                currBlk.push_back(new zext(r, it.rhs.val));
-            }
+            ((consNull) r).type = transType(it.lhs.type);
+            currBlk.push_back(new store(it.lhs.val, r));
+            return;
+        }
+        if (sameType(it.rhs.val.irType, it.lhs.type)) {
+            r = it.rhs.val;
         } else {
-            r = createReg("", it.lhs.type);
-            currBlk.push_back(new load(r, it.rhs.val));
+            if (!(it.rhs.val.irType instanceof IRPtr)) {
+                r = createReg("", it.lhs.type, false);
+                currBlk.push_back(new zext(r, it.rhs.val));
+            } else {
+                r = createReg("", it.lhs.type, false);
+                currBlk.push_back(new load(r, it.rhs.val));
+            }
         }
         currBlk.push_back(new store(it.lhs.val, r));
     }
@@ -379,7 +422,12 @@ public class IRBuilder implements ASTVisitor {
         } else {
             //todo
             //不确定
-            it.val = currScope.getEntity(it.str);
+            if (currClass != null && currClass.get_member(it.str) != null) {
+                it.val = new register(new IRPtr(currClass.get_member(it.str)));
+                currBlk.push_back(new getelementptr(it.val, currClassReg, new consInt(0), new consInt(currClass.memberMap.get(it.str))));
+            } else {
+                it.val = currScope.getEntity(it.str);
+            }
         }
 
     }
@@ -403,13 +451,13 @@ public class IRBuilder implements ASTVisitor {
         if (it.lhs.val instanceof constant || !(it.lhs.val.irType instanceof IRPtr)) {
             l = it.lhs.val;
         } else {
-            l = createReg("", it.lhs.type);
+            l = createReg("", it.lhs.type, false);
             currBlk.push_back(new load(l, it.lhs.val));
         }
         if (it.rhs.val instanceof constant || !(it.rhs.val.irType instanceof IRPtr)) {
             r = it.rhs.val;
         } else {
-            r = createReg("", it.rhs.type);
+            r = createReg("", it.rhs.type, false);
             currBlk.push_back(new load(r, it.rhs.val));
         }
 
@@ -556,8 +604,8 @@ public class IRBuilder implements ASTVisitor {
                 currFunc.blocks.add(dest);
             }
             default -> {
-                it.val = createReg("", it.type);
-                currBlk.push_back(new binary(it.op, it.lhs.val, it.rhs.val, it.val));
+                it.val = createReg("", it.type, false);
+                currBlk.push_back(new binary(it.op, l, r, it.val));
             }
         }
     }
@@ -568,27 +616,27 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(FuncExprNode it){
         call callFunc;
-        String funcName;
-        if (it.funcName instanceof MemberExprNode)
-            callFunc = new call((register) it.val, ((MemberExprNode) it.funcName).member, ((MemberExprNode) it.funcName).name.str);
-        else
-            callFunc = new call((register) it.val, it.funcName.str);
-        it.val = createReg("", it.type);
-        //todo
-        //check builtin
+        if (it.funcName instanceof MemberExprNode mem) {
+            mem.name.accept(this);
+            IRClass type = (IRClass) ((IRPtr) mem.name.val.irType).pointDown();
+            callFunc = new call(null, mem.member, type.className);
+            callFunc.paramList.add(mem.name.val);
+        } else {
+            callFunc = new call(null, it.funcName.str);
+        }
         if (it.lists != null) {
             for (ExprNode x : it.lists.exprs) {
                 x.accept(this);
                 if (x.val instanceof constant || !(x.val.irType instanceof IRPtr)) {
                     callFunc.paramList.add(x.val);
                 } else {
-                    register new_x = createReg("", x.type);
+                    register new_x = createReg("", x.type, false);
                     currBlk.push_back(new load(new_x, x.val));
                     callFunc.paramList.add(new_x);
                 }
             }
         }
-
+        callFunc.returnReg = createReg("", it.type, false);
         currBlk.push_back(callFunc);
         it.val = callFunc.returnReg;
     }
@@ -610,7 +658,6 @@ public class IRBuilder implements ASTVisitor {
     }
 
     private entity fetchNewArray(IRType type, int loc, ArrayList<ExprNode> sizeList){
-        register callReturn = new register(new IRPtr(new IRInt(8)));
         sizeList.get(loc).accept(this);
         entity cnt = sizeList.get(loc).val, size;
         int typeSize = ((IRPtr) type).pointDown().size;
@@ -618,18 +665,28 @@ public class IRBuilder implements ASTVisitor {
             size = new consInt(((consInt) cnt).value * typeSize + 4);
         } else {
             consInt sizeOfType = new consInt(typeSize);
-            register tmp = new register(new IRInt(32));
-            currBlk.push_back(new binary("*", cnt, sizeOfType, tmp));
-            size = new register(new IRInt(4));
-            currBlk.push_back(new binary("+", tmp, new consInt(4), size));
+            register tmp;
+            if (!cnt.irType.name.equals("i32")) {
+                register rr = new register(new IRInt(32));
+                currBlk.push_back(new load(rr, cnt));
+                cnt = rr;
+                tmp = new register(new IRInt(32));
+                currBlk.push_back(new binary("*", rr, sizeOfType, tmp));
+            } else {
+                tmp = new register(new IRInt(32));
+                currBlk.push_back(new binary("*", cnt, sizeOfType, tmp));
+            }
+            size = new register(new IRInt(32));
+            currBlk.push_back(new binary("+", tmp, new consInt(32), size));
         }
-        currBlk.push_back(new call(callReturn, "malloc", size));
+        register callReturn = new register(new IRPtr(new IRInt(8)));
+        currBlk.push_back(new call(callReturn, "__malloc", size));
         //完成空间的申请
         register ptr, tmp1 = new register(new IRPtr(new IRInt(32))), tmp2 = new register(new IRPtr(new IRInt(32)));
         currBlk.push_back(new bitcast(tmp1, callReturn));
         currBlk.push_back(new store(tmp1, cnt));
         currBlk.push_back(new getelementptr(tmp2, tmp1, new consInt(1)));
-        if (((IRPtr) type).base instanceof IRInt && ((IRPtr) type).base.size == 4) { //i32*
+        if (type.name.equals("i32*")) {
             ptr = tmp2;
         } else {
             ptr = new register(type);
@@ -641,7 +698,8 @@ public class IRBuilder implements ASTVisitor {
             block condition = new block(++currFunc.block_cnt, currBlk, "_for_cond");
             block forLoop = new block(++currFunc.block_cnt, currBlk, "_for_loop");
             block destination = new block(++currFunc.block_cnt, currBlk, "_for_next");
-
+            currFunc.blocks.add(condition);
+            currFunc.blocks.add(forLoop);
 
             register idx = new register(new IRPtr(new IRInt(32)));
             currBlk.push_back(new alloca(new IRInt(32), idx));
@@ -664,16 +722,15 @@ public class IRBuilder implements ASTVisitor {
             register tmp = new register(new IRInt(32));
             currBlk.push_back(new binary("+", i, new consInt(1), tmp));
             currBlk.push_back(new store(idx, tmp));
+            currBlk.push_back(new jump(condition));
 
             currBlk = destination;
-            currFunc.blocks.add(condition);
-            currFunc.blocks.add(forLoop);
             currFunc.blocks.add(destination);
         }
         return ptr;
     }
 
-    public void visit(NewExprNode it){ //只允许1层new
+    public void visit(NewExprNode it){
         IRType type = transType(it.type);
         if (it.dim > 0) {
             it.val = it.sizeList.size() > 0 ? fetchNewArray(type, 0, it.sizeList) : new consNull();
@@ -681,21 +738,18 @@ public class IRBuilder implements ASTVisitor {
             IRType irStringType = new IRPtr(new IRInt(8));
             IRClass classType = (IRClass) ((IRPtr) type).pointDown();
             register callReg = new register(irStringType);
-            currBlk.push_back(new call(callReg, "malloc", new consInt(classType.size)));
+            currBlk.push_back(new call(callReg, "__malloc", new consInt(classType.size)));
             it.val = new register(type);
             currBlk.push_back(new bitcast(it.val, callReg));
-            if (classType.have_build) {
-                currBlk.push_back(new call(new register(new IRVoid()), classType.name + "." + classType.name));
-                //currBlk.push_back(new call(new register(new IRVoid()), classType.name + "." + classType.name, it.val));
-            }
+            currBlk.push_back(new call(null, classType.name + ".build"));
         }
     }
 
     public void visit(PreAddExprNode it){
         it.expr.accept(this);
-        register l = createReg("", it.expr.type);
+        register l = createReg("", it.expr.type, false);
         currBlk.push_back(new load(l, it.expr.val));
-        it.val = createReg("", it.expr.type);
+        it.val = createReg("", it.expr.type, false);
         currBlk.push_back(new binary("add" , l, new consInt(it.op.equals("++") ? 1 : -1), it.val));
         currBlk.push_back(new store(it.expr.val, it.val));
     }
@@ -705,7 +759,7 @@ public class IRBuilder implements ASTVisitor {
         //考虑常数直接计算？？
         //todo
         it.expr.accept(this);
-        register d = createReg("", it.expr.type);
+        register d = createReg("", it.expr.type, false);
         currBlk.push_back(new load(d, it.expr.val));
         switch (it.op) {
             case "!" -> {
@@ -717,21 +771,21 @@ public class IRBuilder implements ASTVisitor {
                 //currBlk.push_back(new unary("seqz", new consInt(0), d, it.val));
             }
             case "~" -> {
-                it.val = createReg("", it.type);
+                it.val = createReg("", it.type, false);
                 currBlk.push_back(new binary("^", d, new consInt(-1), it.val));
             }
             case "-" -> {
-                it.val = createReg("", it.type);
+                it.val = createReg("", it.type, false);
                 currBlk.push_back(new binary("-", new consInt(0), d, it.val));
             }
             case "++" -> {
-                register dest = createReg("", it.expr.type);
+                register dest = createReg("", it.expr.type, false);
                 currBlk.push_back(new binary("+", d, new consInt(1), dest));
                 currBlk.push_back(new store(it.expr.val, dest));
                 it.val = d;
             }
             case "--" -> {
-                register dest = createReg("", it.expr.type);
+                register dest = createReg("", it.expr.type, false);
                 currBlk.push_back(new binary("+", d, new consInt(-1), dest));
                 currBlk.push_back(new store(it.expr.val, dest));
                 it.val = d;

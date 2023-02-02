@@ -5,7 +5,7 @@ import Util.Type;
 
 public class register extends entity {
 
-    public static int reg_cnt = 0;
+    public static int reg_cnt = -1;
     public int reg_num = -1;
     public String identity;
 

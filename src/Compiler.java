@@ -9,6 +9,7 @@ import Frontend.SymbolCollector;
 import Middlend.IRBuilder;
 import Middlend.IRPrinter;
 import Util.BuiltinASMPrinter;
+import Util.BuiltinIRPrinter;
 import Util.Scope.globalScope;
 import Util.MxErrorListener;
 import org.antlr.v4.runtime.CharStreams;
@@ -59,6 +60,7 @@ public class Compiler {
             PrintStream ir_out = new PrintStream(new FileOutputStream("output.ll"));
             IRPrinter irPrinter = new IRPrinter(ir_out);
             irPrinter.printIR(irBuilder);
+            new BuiltinIRPrinter(ir_out);
 
             //ir to asm
             /*

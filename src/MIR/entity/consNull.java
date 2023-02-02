@@ -1,8 +1,11 @@
 package MIR.entity;
 
+import MIR.type.IRType;
 import MIR.type.IRVoid;
 
 public class consNull extends constant{
+
+    public IRType type = null;
 
     public consNull(){
         super(new IRVoid());
@@ -15,6 +18,6 @@ public class consNull extends constant{
 
     @Override
     public String printWithType(){
-        return "null";
+        return type == null ?  "null" : type + " null";
     }
 }

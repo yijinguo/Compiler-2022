@@ -1,8 +1,21 @@
-int a = 3;
+int a = 0;
+class A{
+    int f(){
+       b = a;
+       return b;
+    }
+    int b;
+};
+
+int fff(int x, int y){
+    return x+y;
+//return 1;
+}
 
 int main(){
-    int a = 1, b = 2;
-    bool c = true;
+    A c;
+    int x = fff(1,2);
+    printInt(x);
 }
 
 /*

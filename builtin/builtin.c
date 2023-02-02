@@ -61,3 +61,7 @@ char *__str_add(char *s1, char *s2) {
     strcat(str, s2);
     return str;
 }
+
+char *__malloc(int size) {
+    return (char *) malloc(size);
+}

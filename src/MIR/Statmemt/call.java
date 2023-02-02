@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 public class call extends statement{
     public String functionName;
-    public String className = "";
+    public String className = null;
     public register returnReg;
     public ArrayList<entity> paramList = new ArrayList<>();
 
