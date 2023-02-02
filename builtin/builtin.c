@@ -31,7 +31,7 @@ char *toString(int i) {
 
 int __mx_length(char *str){ return strlen(str); }
 
-char *__mx_substring(int left, int right, char *str){
+char *__mx_substring(char *str, int left, int right){
     int len = right - left + 1;
     char *substr = (char *) malloc(sizeof(char) * len);
     memcpy(substr, str + left, len);
@@ -45,7 +45,7 @@ int __mx_parseInt(char *str){
     return x;
 }
 
-int __mx_ord(int pos, char *str){
+int __mx_ord(char *str, int pos){
     return str[pos];
 }
 

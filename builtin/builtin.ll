@@ -101,17 +101,17 @@ define dso_local i32 @__mx_length(i8* %0) #0 {
 declare dso_local i64 @strlen(i8*) #3
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @__mx_substring(i32 %0, i32 %1, i8* %2) #0 {
-  %4 = alloca i32, align 4
+define dso_local i8* @__mx_substring(i8* %0, i32 %1, i32 %2) #0 {
+  %4 = alloca i8*, align 8
   %5 = alloca i32, align 4
-  %6 = alloca i8*, align 8
+  %6 = alloca i32, align 4
   %7 = alloca i32, align 4
   %8 = alloca i8*, align 8
-  store i32 %0, i32* %4, align 4
+  store i8* %0, i8** %4, align 8
   store i32 %1, i32* %5, align 4
-  store i8* %2, i8** %6, align 8
-  %9 = load i32, i32* %5, align 4
-  %10 = load i32, i32* %4, align 4
+  store i32 %2, i32* %6, align 4
+  %9 = load i32, i32* %6, align 4
+  %10 = load i32, i32* %5, align 4
   %11 = sub nsw i32 %9, %10
   %12 = add nsw i32 %11, 1
   store i32 %12, i32* %7, align 4
@@ -121,8 +121,8 @@ define dso_local i8* @__mx_substring(i32 %0, i32 %1, i8* %2) #0 {
   %16 = call noalias i8* @malloc(i64 %15) #5
   store i8* %16, i8** %8, align 8
   %17 = load i8*, i8** %8, align 8
-  %18 = load i8*, i8** %6, align 8
-  %19 = load i32, i32* %4, align 4
+  %18 = load i8*, i8** %4, align 8
+  %19 = load i32, i32* %5, align 4
   %20 = sext i32 %19 to i64
   %21 = getelementptr inbounds i8, i8* %18, i64 %20
   %22 = load i32, i32* %7, align 4
@@ -156,13 +156,13 @@ define dso_local i32 @__mx_parseInt(i8* %0) #0 {
 declare dso_local i32 @__isoc99_sscanf(i8*, i8*, ...) #2
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @__mx_ord(i32 %0, i8* %1) #0 {
-  %3 = alloca i32, align 4
-  %4 = alloca i8*, align 8
-  store i32 %0, i32* %3, align 4
-  store i8* %1, i8** %4, align 8
-  %5 = load i8*, i8** %4, align 8
-  %6 = load i32, i32* %3, align 4
+define dso_local i32 @__mx_ord(i8* %0, i32 %1) #0 {
+  %3 = alloca i8*, align 8
+  %4 = alloca i32, align 4
+  store i8* %0, i8** %3, align 8
+  store i32 %1, i32* %4, align 4
+  %5 = load i8*, i8** %3, align 8
+  %6 = load i32, i32* %4, align 4
   %7 = sext i32 %6 to i64
   %8 = getelementptr inbounds i8, i8* %5, i64 %7
   %9 = load i8, i8* %8, align 1

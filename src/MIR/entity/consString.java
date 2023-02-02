@@ -11,8 +11,8 @@ public class consString extends constant{
     public static int cnt = 0;
 
     public consString(String value){
-        super(new IRPtr(new IRArray(new IRInt(8), value.length() + 1)));
-        this.value = value;
+        super(new IRPtr(new IRArray(new IRInt(8), value.length() - 1)));
+        this.value = value.substring(1, value.length()-1);
         this.id = cnt++;
     }
 
@@ -24,5 +24,9 @@ public class consString extends constant{
     @Override
     public String printWithType(){
         return "[" + (value.length() + 1) + " x i8]* " + this;
+    }
+
+    public String printGlobal(){
+        return "[" + (value.length() + 1) + " x i8] c\"" + value + "\\00\"";
     }
 }

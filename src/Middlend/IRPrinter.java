@@ -23,9 +23,10 @@ public class IRPrinter implements IRVisitor{
     public void printIR(IRBuilder IR){
         //全局变量
         for (Map.Entry<String, entity> entry : IR.gScope.entities.entrySet()){
-            if (entry.getValue() instanceof globalVar) {
-                globalVar it = (globalVar) entry.getValue();
+            if (entry.getValue() instanceof globalVar it) {
                 out.print(it + " = global " + it.init.printWithType() + "\n");
+            } else if (entry.getValue() instanceof consString it) {
+                out.print(it + " = private unnamed_addr constant " + it.printGlobal() + "\n");
             }
         }
         out.print("\n");
@@ -112,7 +113,11 @@ public class IRPrinter implements IRVisitor{
     }
 
     public void visit(cast it) {
-        out.print("\t" + it.dest + " = bitcast " + it.val.printWithType() + " to " + it.dest.irType + "\n");
+        if (it instanceof bitcast) {
+            out.print("\t" + it.dest + " = bitcast " + it.val.printWithType() + " to " + it.dest.irType + "\n");
+        } else {
+            out.print("\t" + it.dest + " = trunc " + it.val.printWithType() + " to " + it.dest.irType + "\n");
+        }
     }
 
 
