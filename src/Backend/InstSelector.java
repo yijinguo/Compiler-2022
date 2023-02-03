@@ -189,7 +189,8 @@ public class InstSelector implements IRVisitor {
             }
         }
         currBlk.addInst(new Call(it.className == null ? it.functionName : it.className + "::" + it.functionName));
-        if (!(it.returnReg.irType instanceof IRVoid))
+        //if (!(it.returnReg.irType instanceof IRVoid))
+        if (it.returnReg != null)
             currBlk.addInst(new Mv(getReg(it.returnReg), PhyReg.regMap.get("a0")));
     }
     public void visit(getelementptr it){

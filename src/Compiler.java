@@ -63,7 +63,7 @@ public class Compiler {
             new BuiltinIRPrinter(ir_out);
 
             //ir to asm
-            /*
+
             InstSelector selector = new InstSelector(irBuilder);
             RegAlloca regAlloca = new RegAlloca(selector.program);
             regAlloca.work();
@@ -72,7 +72,7 @@ public class Compiler {
             ASMPrinter asmPrinter = new ASMPrinter(asm_out);
             asmPrinter.print(selector.program);
             new BuiltinASMPrinter(asm_out);
-*/
+
         }catch (Error err){
 //            System.out.println(err.errorMsg());
             throw err;
