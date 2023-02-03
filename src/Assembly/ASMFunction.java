@@ -30,7 +30,7 @@ public class ASMFunction {
         for (ASMBlock b : Blocks) {
             ret += b.print();
         }
-        ret += "\n";
+        ret += "\tret\n\n";
         return ret;
     }
 
