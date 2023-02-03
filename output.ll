@@ -1,734 +1,531 @@
-@color = global i32* null
-@str_0 = private unnamed_addr constant [2 x i8] c" \00"
-@count = global i32* null
-@i = global i32 0
-@j = global i32 0
-@make = global i32** null
-@str_1 = private unnamed_addr constant [3 x i8] c"\n\00"
+@str_7 = private unnamed_addr constant [8 x i8] c"x * y: \00"
+@str_6 = private unnamed_addr constant [8 x i8] c"x + y: \00"
+@str_0 = private unnamed_addr constant [3 x i8] c"( \00"
+@str_2 = private unnamed_addr constant [3 x i8] c" )\00"
+@str_1 = private unnamed_addr constant [3 x i8] c", \00"
+@str_4 = private unnamed_addr constant [9 x i8] c"excited!\00"
+@str_5 = private unnamed_addr constant [11 x i8] c"vector y: \00"
+@str_3 = private unnamed_addr constant [11 x i8] c"vector x: \00"
+@str_8 = private unnamed_addr constant [15 x i8] c"(1 << 3) * y: \00"
 
-define internal void @_GLOBAL__sub_I_example.cpp() {
-	call void @__global_new_init_color()
-	call void @__global_new_init_count()
-	ret void
+%class.vector = type { i32* }
+
+define i32 @vector.getDim(%class.vector* %0) {
+	%2 = alloca %class.vector*
+	store %class.vector* %0, %class.vector** %2
+	%3 = load %class.vector*, %class.vector** %2
+	%4 = getelementptr %class.vector, %class.vector* %3, i32 0, i32 0
+	%5 = icmp eq i32** %4, null
+	br i1 %5, label %_if_then_1, label %_if_else_2
+
+_if_then_1:
+	ret i32 0
+
+_if_else_2:
+	br label %_if_next_3
+
+_if_next_3:
+	%6 = getelementptr %class.vector, %class.vector* %3, i32 0, i32 0
+	%7 = load i32*, i32** %6
+	%8 = getelementptr i32, i32* %7, i32 -1
+	%9 = load i32, i32* %8
+	ret i32 %9
 
 }
 
-define internal void @__global_new_init_color() {
-	%1 = call i8* @__malloc(i32 44)
-	%2 = bitcast i8* %1 to i32*
-	store i32 10, i32* %2
-	%3 = getelementptr i32, i32* %2, i32 1
-	store i32* %3, i32** @color
-	ret void
-
-}
-
-define void @search(i32 %0, i32 %1, i32 %2) {
-	%4 = alloca i32
-	store i32 %0, i32* %4
-	%5 = alloca i32
-	store i32 %1, i32* %5
-	%6 = alloca i32
-	store i32 %2, i32* %6
-	%7 = alloca i32
-	%8 = alloca i32
-	%9 = alloca i32
-	%10 = load i32, i32* %5
-	%11 = icmp sgt i32 %10, 0
-	%12 = load i32, i32* %5
-	%13 = icmp slt i32 %12, 0
-	%14 = zext i1 %11 to i8
-	%15 = zext i1 %13 to i8
-	%16 = icmp ne i8 %14, 0
-	br i1 %16, label %_lor_next_2, label %_lor_rhs_1
+define %class.vector @vector.add(%class.vector* %0, %class.vector %1) {
+	%3 = alloca %class.vector
+	store %class.vector %1, %class.vector* %3
+	%4 = alloca %class.vector*
+	store %class.vector* %0, %class.vector** %4
+	%5 = load %class.vector*, %class.vector** %4
+	%6 = call i32 @vector.getDim(%class.vector* %5)
+	%7 = call i32 @vector.getDim(%class.vector* %3)
+	%8 = icmp ne i32 %6, %7
+	%9 = call i32 @vector.getDim(%class.vector* %5)
+	%10 = icmp eq i32 %9, 0
+	%11 = zext i1 %8 to i8
+	%12 = zext i1 %10 to i8
+	%13 = icmp ne i8 %11, 0
+	br i1 %13, label %_lor_next_2, label %_lor_rhs_1
 
 _lor_rhs_1:
-	%17 = icmp ne i8 %15, 0
+	%14 = icmp ne i8 %12, 0
 	br label %_lor_next_2
 
 _lor_next_2:
-	%18 = icmp ne i1 %16, %17
-	%19 = load i32, i32* %4
-	%20 = icmp eq i32 %19, 0
-	%21 = zext i1 %18 to i8
-	%22 = zext i1 %20 to i8
-	%23 = icmp ne i8 %21, 0
-	br i1 %23, label %_lor_next_4, label %_lor_rhs_3
+	%15 = icmp ne i1 %13, %14
+	br i1 %15, label %_if_then_3, label %_if_else_4
 
-_lor_rhs_3:
-	%24 = icmp ne i8 %22, 0
-	br label %_lor_next_4
+_if_then_3:
+	%16 = load %class.vector, %class.vector* null
+	ret %class.vector %16
 
-_lor_next_4:
-	%25 = icmp ne i1 %23, %24
-	%26 = load i32**, i32*** @make
-	%27 = load i32, i32* %4
-	%28 = sub nsw i32 %27, 1
-	%29 = getelementptr i32*, i32** %26, i32 %28
-	%30 = load i32*, i32** %29
-	%31 = getelementptr i32, i32* %30, i32 0
-	%32 = load i32**, i32*** @make
-	%33 = load i32, i32* %4
-	%34 = sub nsw i32 %33, 1
-	%35 = getelementptr i32*, i32** %32, i32 %34
-	%36 = load i32*, i32** %35
-	%37 = getelementptr i32, i32* %36, i32 1
-	%38 = load i32, i32* %31
-	%39 = load i32, i32* %37
-	%40 = add nsw i32 %38, %39
-	%41 = load i32**, i32*** @make
-	%42 = load i32, i32* %4
-	%43 = sub nsw i32 %42, 1
-	%44 = getelementptr i32*, i32** %41, i32 %43
-	%45 = load i32*, i32** %44
-	%46 = getelementptr i32, i32* %45, i32 2
-	%47 = load i32, i32* %46
-	%48 = add nsw i32 %40, %47
-	%49 = icmp eq i32 %48, 15
-	%50 = zext i1 %25 to i8
-	%51 = zext i1 %49 to i8
-	%52 = icmp ne i8 %50, 0
-	br i1 %52, label %_lor_next_6, label %_lor_rhs_5
+_if_else_4:
+	br label %_if_next_5
 
-_lor_rhs_5:
-	%53 = icmp ne i8 %51, 0
-	br label %_lor_next_6
+_if_next_5:
+	%17 = alloca %class.vector
+	%18 = call i8* @__malloc(i32 4)
+	%19 = bitcast i8* %18 to %class.vector*
+	call void @vector.build(%class.vector* %19)
+	%20 = load %class.vector, %class.vector* %19
+	store %class.vector %20, %class.vector* %17
+	%21 = alloca i32
+	%22 = getelementptr %class.vector, %class.vector* %17, i32 0, i32 0
+	%23 = call i32 @vector.getDim(%class.vector* %5)
+	%24 = mul nsw i32 %23, 4
+	%25 = add nsw i32 %24, 32
+	%26 = call i8* @__malloc(i32 %25)
+	%27 = bitcast i8* %26 to i32*
+	store i32 %23, i32* %27
+	%28 = getelementptr i32, i32* %27, i32 1
+	store i32* %28, i32** %22
+	store i32 0, i32* %21
+	br label %_for_cond_6
 
-_lor_next_6:
-	%54 = icmp ne i1 %52, %53
-	br i1 %54, label %_if_then_7, label %_if_else_8
+_for_cond_6:
+	%29 = call i32 @vector.getDim(%class.vector* %5)
+	%30 = load i32, i32* %21
+	%31 = icmp slt i32 %30, %29
+	br i1 %31, label %_for_loop_7, label %_for_next_8
 
-_if_then_7:
-	%55 = load i32, i32* %4
-	%56 = icmp eq i32 %55, 2
-	%57 = load i32, i32* %5
-	%58 = icmp eq i32 %57, 2
-	%59 = zext i1 %56 to i8
-	%60 = zext i1 %58 to i8
-	%61 = icmp ne i8 %59, 0
-	br i1 %61, label %_land_rhs_10, label %_land_next_11
+_for_loop_7:
+	%32 = load i32, i32* %21
+	%33 = add nsw i32 %32, 1
+	store i32 %33, i32* %21
+	%34 = getelementptr %class.vector, %class.vector* %17, i32 0, i32 0
+	%35 = load i32*, i32** %34
+	%36 = load i32, i32* %21
+	%37 = getelementptr i32, i32* %35, i32 %36
+	%38 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%39 = load i32*, i32** %38
+	%40 = load i32, i32* %21
+	%41 = getelementptr i32, i32* %39, i32 %40
+	%42 = getelementptr %class.vector, %class.vector* %3, i32 0, i32 0
+	%43 = load i32*, i32** %42
+	%44 = load i32, i32* %21
+	%45 = getelementptr i32, i32* %43, i32 %44
+	%46 = load i32, i32* %41
+	%47 = load i32, i32* %45
+	%48 = add nsw i32 %46, %47
+	store i32 %48, i32* %37
+	br label %_for_cond_6
 
-_land_rhs_10:
-	%62 = icmp ne i8 %60, 0
-	br label %_land_next_11
-
-_land_next_11:
-	%63 = icmp eq i1 %61, %62
-	br i1 %63, label %_if_then_12, label %_if_else_13
-
-_if_then_12:
-	%64 = load i32**, i32*** @make
-	%65 = getelementptr i32*, i32** %64, i32 2
-	%66 = load i32*, i32** %65
-	%67 = getelementptr i32, i32* %66, i32 2
-	%68 = load i32, i32* %6
-	%69 = sub nsw i32 45, %68
-	store i32 %69, i32* %67
-	%70 = load i32**, i32*** @make
-	%71 = getelementptr i32*, i32** %70, i32 0
-	%72 = load i32*, i32** %71
-	%73 = getelementptr i32, i32* %72, i32 0
-	%74 = load i32**, i32*** @make
-	%75 = getelementptr i32*, i32** %74, i32 0
-	%76 = load i32*, i32** %75
-	%77 = getelementptr i32, i32* %76, i32 1
-	%78 = load i32, i32* %73
-	%79 = load i32, i32* %77
-	%80 = add nsw i32 %78, %79
-	%81 = load i32**, i32*** @make
-	%82 = getelementptr i32*, i32** %81, i32 0
-	%83 = load i32*, i32** %82
-	%84 = getelementptr i32, i32* %83, i32 2
-	%85 = load i32, i32* %84
-	%86 = add nsw i32 %80, %85
-	store i32 %86, i32* %7
-	%87 = load i32**, i32*** @make
-	%88 = getelementptr i32*, i32** %87, i32 1
-	%89 = load i32*, i32** %88
-	%90 = getelementptr i32, i32* %89, i32 0
-	%91 = load i32**, i32*** @make
-	%92 = getelementptr i32*, i32** %91, i32 1
-	%93 = load i32*, i32** %92
-	%94 = getelementptr i32, i32* %93, i32 1
-	%95 = load i32, i32* %90
-	%96 = load i32, i32* %94
-	%97 = add nsw i32 %95, %96
-	%98 = load i32**, i32*** @make
-	%99 = getelementptr i32*, i32** %98, i32 1
-	%100 = load i32*, i32** %99
-	%101 = getelementptr i32, i32* %100, i32 2
-	%102 = load i32, i32* %101
-	%103 = add nsw i32 %97, %102
-	%104 = load i32, i32* %7
-	%105 = icmp eq i32 %103, %104
-	%106 = load i32**, i32*** @make
-	%107 = getelementptr i32*, i32** %106, i32 2
-	%108 = load i32*, i32** %107
-	%109 = getelementptr i32, i32* %108, i32 0
-	%110 = load i32**, i32*** @make
-	%111 = getelementptr i32*, i32** %110, i32 2
-	%112 = load i32*, i32** %111
-	%113 = getelementptr i32, i32* %112, i32 1
-	%114 = load i32, i32* %109
-	%115 = load i32, i32* %113
-	%116 = add nsw i32 %114, %115
-	%117 = load i32**, i32*** @make
-	%118 = getelementptr i32*, i32** %117, i32 2
-	%119 = load i32*, i32** %118
-	%120 = getelementptr i32, i32* %119, i32 2
-	%121 = load i32, i32* %120
-	%122 = add nsw i32 %116, %121
-	%123 = load i32, i32* %7
-	%124 = icmp eq i32 %122, %123
-	%125 = zext i1 %105 to i8
-	%126 = zext i1 %124 to i8
-	%127 = icmp ne i8 %125, 0
-	br i1 %127, label %_land_rhs_15, label %_land_next_16
-
-_land_rhs_15:
-	%128 = icmp ne i8 %126, 0
-	br label %_land_next_16
-
-_land_next_16:
-	%129 = icmp eq i1 %127, %128
-	%130 = load i32**, i32*** @make
-	%131 = getelementptr i32*, i32** %130, i32 0
-	%132 = load i32*, i32** %131
-	%133 = getelementptr i32, i32* %132, i32 0
-	%134 = load i32**, i32*** @make
-	%135 = getelementptr i32*, i32** %134, i32 1
-	%136 = load i32*, i32** %135
-	%137 = getelementptr i32, i32* %136, i32 0
-	%138 = load i32, i32* %133
-	%139 = load i32, i32* %137
-	%140 = add nsw i32 %138, %139
-	%141 = load i32**, i32*** @make
-	%142 = getelementptr i32*, i32** %141, i32 2
-	%143 = load i32*, i32** %142
-	%144 = getelementptr i32, i32* %143, i32 0
-	%145 = load i32, i32* %144
-	%146 = add nsw i32 %140, %145
-	%147 = load i32, i32* %7
-	%148 = icmp eq i32 %146, %147
-	%149 = zext i1 %129 to i8
-	%150 = zext i1 %148 to i8
-	%151 = icmp ne i8 %149, 0
-	br i1 %151, label %_land_rhs_17, label %_land_next_18
-
-_land_rhs_17:
-	%152 = icmp ne i8 %150, 0
-	br label %_land_next_18
-
-_land_next_18:
-	%153 = icmp eq i1 %151, %152
-	%154 = load i32**, i32*** @make
-	%155 = getelementptr i32*, i32** %154, i32 0
-	%156 = load i32*, i32** %155
-	%157 = getelementptr i32, i32* %156, i32 1
-	%158 = load i32**, i32*** @make
-	%159 = getelementptr i32*, i32** %158, i32 1
-	%160 = load i32*, i32** %159
-	%161 = getelementptr i32, i32* %160, i32 1
-	%162 = load i32, i32* %157
-	%163 = load i32, i32* %161
-	%164 = add nsw i32 %162, %163
-	%165 = load i32**, i32*** @make
-	%166 = getelementptr i32*, i32** %165, i32 2
-	%167 = load i32*, i32** %166
-	%168 = getelementptr i32, i32* %167, i32 1
-	%169 = load i32, i32* %168
-	%170 = add nsw i32 %164, %169
-	%171 = load i32, i32* %7
-	%172 = icmp eq i32 %170, %171
-	%173 = zext i1 %153 to i8
-	%174 = zext i1 %172 to i8
-	%175 = icmp ne i8 %173, 0
-	br i1 %175, label %_land_rhs_19, label %_land_next_20
-
-_land_rhs_19:
-	%176 = icmp ne i8 %174, 0
-	br label %_land_next_20
-
-_land_next_20:
-	%177 = icmp eq i1 %175, %176
-	%178 = load i32**, i32*** @make
-	%179 = getelementptr i32*, i32** %178, i32 0
-	%180 = load i32*, i32** %179
-	%181 = getelementptr i32, i32* %180, i32 2
-	%182 = load i32**, i32*** @make
-	%183 = getelementptr i32*, i32** %182, i32 1
-	%184 = load i32*, i32** %183
-	%185 = getelementptr i32, i32* %184, i32 2
-	%186 = load i32, i32* %181
-	%187 = load i32, i32* %185
-	%188 = add nsw i32 %186, %187
-	%189 = load i32**, i32*** @make
-	%190 = getelementptr i32*, i32** %189, i32 2
-	%191 = load i32*, i32** %190
-	%192 = getelementptr i32, i32* %191, i32 2
-	%193 = load i32, i32* %192
-	%194 = add nsw i32 %188, %193
-	%195 = load i32, i32* %7
-	%196 = icmp eq i32 %194, %195
-	%197 = zext i1 %177 to i8
-	%198 = zext i1 %196 to i8
-	%199 = icmp ne i8 %197, 0
-	br i1 %199, label %_land_rhs_21, label %_land_next_22
-
-_land_rhs_21:
-	%200 = icmp ne i8 %198, 0
-	br label %_land_next_22
-
-_land_next_22:
-	%201 = icmp eq i1 %199, %200
-	%202 = load i32**, i32*** @make
-	%203 = getelementptr i32*, i32** %202, i32 0
-	%204 = load i32*, i32** %203
-	%205 = getelementptr i32, i32* %204, i32 0
-	%206 = load i32**, i32*** @make
-	%207 = getelementptr i32*, i32** %206, i32 1
-	%208 = load i32*, i32** %207
-	%209 = getelementptr i32, i32* %208, i32 1
-	%210 = load i32, i32* %205
-	%211 = load i32, i32* %209
-	%212 = add nsw i32 %210, %211
-	%213 = load i32**, i32*** @make
-	%214 = getelementptr i32*, i32** %213, i32 2
-	%215 = load i32*, i32** %214
-	%216 = getelementptr i32, i32* %215, i32 2
-	%217 = load i32, i32* %216
-	%218 = add nsw i32 %212, %217
-	%219 = load i32, i32* %7
-	%220 = icmp eq i32 %218, %219
-	%221 = zext i1 %201 to i8
-	%222 = zext i1 %220 to i8
-	%223 = icmp ne i8 %221, 0
-	br i1 %223, label %_land_rhs_23, label %_land_next_24
-
-_land_rhs_23:
-	%224 = icmp ne i8 %222, 0
-	br label %_land_next_24
-
-_land_next_24:
-	%225 = icmp eq i1 %223, %224
-	%226 = load i32**, i32*** @make
-	%227 = getelementptr i32*, i32** %226, i32 2
-	%228 = load i32*, i32** %227
-	%229 = getelementptr i32, i32* %228, i32 0
-	%230 = load i32**, i32*** @make
-	%231 = getelementptr i32*, i32** %230, i32 1
-	%232 = load i32*, i32** %231
-	%233 = getelementptr i32, i32* %232, i32 1
-	%234 = load i32, i32* %229
-	%235 = load i32, i32* %233
-	%236 = add nsw i32 %234, %235
-	%237 = load i32**, i32*** @make
-	%238 = getelementptr i32*, i32** %237, i32 0
-	%239 = load i32*, i32** %238
-	%240 = getelementptr i32, i32* %239, i32 2
-	%241 = load i32, i32* %240
-	%242 = add nsw i32 %236, %241
-	%243 = load i32, i32* %7
-	%244 = icmp eq i32 %242, %243
-	%245 = zext i1 %225 to i8
-	%246 = zext i1 %244 to i8
-	%247 = icmp ne i8 %245, 0
-	br i1 %247, label %_land_rhs_25, label %_land_next_26
-
-_land_rhs_25:
-	%248 = icmp ne i8 %246, 0
-	br label %_land_next_26
-
-_land_next_26:
-	%249 = icmp eq i1 %247, %248
-	br i1 %249, label %_if_then_27, label %_if_else_28
-
-_if_then_27:
-	%250 = load i32*, i32** @count
-	%251 = getelementptr i32, i32* %250, i32 0
-	%252 = load i32*, i32** @count
-	%253 = getelementptr i32, i32* %252, i32 0
-	%254 = load i32, i32* %253
-	%255 = add nsw i32 %254, 1
-	store i32 %255, i32* %251
-	store i32 0, i32* %8
-	br label %_for_cond_30
-
-_for_cond_30:
-	%256 = load i32, i32* %8
-	%257 = icmp sle i32 %256, 2
-	br i1 %257, label %_for_loop_31, label %_for_next_32
-
-_for_loop_31:
-	%258 = load i32, i32* %8
-	%259 = add nsw i32 %258, 1
-	store i32 %259, i32* %8
-	store i32 0, i32* %9
-	br label %_for_cond_33
-
-_for_cond_33:
-	%260 = load i32, i32* %9
-	%261 = icmp sle i32 %260, 2
-	br i1 %261, label %_for_loop_34, label %_for_next_35
-
-_for_loop_34:
-	%262 = load i32, i32* %9
-	%263 = add nsw i32 %262, 1
-	store i32 %263, i32* %9
-	%264 = load i32**, i32*** @make
-	%265 = load i32, i32* %8
-	%266 = getelementptr i32*, i32** %264, i32 %265
-	%267 = load i32*, i32** %266
-	%268 = load i32, i32* %9
-	%269 = getelementptr i32, i32* %267, i32 %268
-	%270 = load i32, i32* %269
-	%271 = call i8* @toString(i32 %270)
-	call void @print(i8* %271)
-	%272 = getelementptr [2 x i8], [2 x i8]* @str_0, i32 0, i32 0
-	call void @print(i8* %272)
-	br label %_for_cond_33
-
-_for_next_35:
-	%273 = getelementptr [3 x i8], [3 x i8]* @str_1, i32 0, i32 0
-	call void @print(i8* %273)
-	br label %_for_cond_30
-
-_for_next_32:
-	%274 = getelementptr [3 x i8], [3 x i8]* @str_1, i32 0, i32 0
-	call void @print(i8* %274)
-	br label %_if_next_29
-
-_if_else_28:
-	br label %_if_next_29
-
-_if_next_29:
-	br label %_if_next_14
-
-_if_else_13:
-	%275 = load i32, i32* %5
-	%276 = icmp eq i32 %275, 2
-	br i1 %276, label %_if_then_36, label %_if_else_37
-
-_if_then_36:
-	%277 = load i32**, i32*** @make
-	%278 = load i32, i32* %4
-	%279 = getelementptr i32*, i32** %277, i32 %278
-	%280 = load i32*, i32** %279
-	%281 = load i32, i32* %5
-	%282 = getelementptr i32, i32* %280, i32 %281
-	%283 = load i32**, i32*** @make
-	%284 = load i32, i32* %4
-	%285 = getelementptr i32*, i32** %283, i32 %284
-	%286 = load i32*, i32** %285
-	%287 = getelementptr i32, i32* %286, i32 0
-	%288 = load i32, i32* %287
-	%289 = sub nsw i32 15, %288
-	%290 = load i32**, i32*** @make
-	%291 = load i32, i32* %4
-	%292 = getelementptr i32*, i32** %290, i32 %291
-	%293 = load i32*, i32** %292
-	%294 = getelementptr i32, i32* %293, i32 1
-	%295 = load i32, i32* %294
-	%296 = sub nsw i32 %289, %295
-	store i32 %296, i32* %282
-	%297 = load i32**, i32*** @make
-	%298 = load i32, i32* %4
-	%299 = getelementptr i32*, i32** %297, i32 %298
-	%300 = load i32*, i32** %299
-	%301 = load i32, i32* %5
-	%302 = getelementptr i32, i32* %300, i32 %301
-	%303 = load i32, i32* %302
-	%304 = icmp sgt i32 %303, 0
-	%305 = load i32**, i32*** @make
-	%306 = load i32, i32* %4
-	%307 = getelementptr i32*, i32** %305, i32 %306
-	%308 = load i32*, i32** %307
-	%309 = load i32, i32* %5
-	%310 = getelementptr i32, i32* %308, i32 %309
-	%311 = load i32, i32* %310
-	%312 = icmp slt i32 %311, 10
-	%313 = zext i1 %304 to i8
-	%314 = zext i1 %312 to i8
-	%315 = icmp ne i8 %313, 0
-	br i1 %315, label %_land_rhs_39, label %_land_next_40
-
-_land_rhs_39:
-	%316 = icmp ne i8 %314, 0
-	br label %_land_next_40
-
-_land_next_40:
-	%317 = icmp eq i1 %315, %316
-	%318 = load i32*, i32** @color
-	%319 = load i32**, i32*** @make
-	%320 = load i32, i32* %4
-	%321 = getelementptr i32*, i32** %319, i32 %320
-	%322 = load i32*, i32** %321
-	%323 = load i32, i32* %5
-	%324 = getelementptr i32, i32* %322, i32 %323
-	%325 = load i32, i32* %324
-	%326 = getelementptr i32, i32* %318, i32 %325
-	%327 = load i32, i32* %326
-	%328 = icmp eq i32 %327, 0
-	%329 = zext i1 %317 to i8
-	%330 = zext i1 %328 to i8
-	%331 = icmp ne i8 %329, 0
-	br i1 %331, label %_land_rhs_41, label %_land_next_42
-
-_land_rhs_41:
-	%332 = icmp ne i8 %330, 0
-	br label %_land_next_42
-
-_land_next_42:
-	%333 = icmp eq i1 %331, %332
-	br i1 %333, label %_if_then_43, label %_if_else_44
-
-_if_then_43:
-	%334 = load i32*, i32** @color
-	%335 = load i32**, i32*** @make
-	%336 = load i32, i32* %4
-	%337 = getelementptr i32*, i32** %335, i32 %336
-	%338 = load i32*, i32** %337
-	%339 = load i32, i32* %5
-	%340 = getelementptr i32, i32* %338, i32 %339
-	%341 = load i32, i32* %340
-	%342 = getelementptr i32, i32* %334, i32 %341
-	store i32 1, i32* %342
-	%343 = load i32, i32* %5
-	%344 = icmp eq i32 %343, 2
-	br i1 %344, label %_if_then_46, label %_if_else_47
-
-_if_then_46:
-	%345 = load i32, i32* %4
-	%346 = add nsw i32 %345, 1
-	%347 = load i32**, i32*** @make
-	%348 = load i32, i32* %4
-	%349 = getelementptr i32*, i32** %347, i32 %348
-	%350 = load i32*, i32** %349
-	%351 = load i32, i32* %5
-	%352 = getelementptr i32, i32* %350, i32 %351
-	%353 = load i32, i32* %6
-	%354 = load i32, i32* %352
-	%355 = add nsw i32 %353, %354
-	call void @search(i32 %346, i32 0, i32 %355)
-	br label %_if_next_48
-
-_if_else_47:
-	%356 = load i32, i32* %4
-	%357 = load i32, i32* %5
-	%358 = add nsw i32 %357, 1
-	%359 = load i32**, i32*** @make
-	%360 = load i32, i32* %4
-	%361 = getelementptr i32*, i32** %359, i32 %360
-	%362 = load i32*, i32** %361
-	%363 = load i32, i32* %5
-	%364 = getelementptr i32, i32* %362, i32 %363
-	%365 = load i32, i32* %6
-	%366 = load i32, i32* %364
-	%367 = add nsw i32 %365, %366
-	call void @search(i32 %356, i32 %358, i32 %367)
-	br label %_if_next_48
-
-_if_next_48:
-	%368 = load i32*, i32** @color
-	%369 = load i32**, i32*** @make
-	%370 = load i32, i32* %4
-	%371 = getelementptr i32*, i32** %369, i32 %370
-	%372 = load i32*, i32** %371
-	%373 = load i32, i32* %5
-	%374 = getelementptr i32, i32* %372, i32 %373
-	%375 = load i32, i32* %374
-	%376 = getelementptr i32, i32* %368, i32 %375
-	store i32 0, i32* %376
-	br label %_if_next_45
-
-_if_else_44:
-	br label %_if_next_45
-
-_if_next_45:
-	br label %_if_next_38
-
-_if_else_37:
-	store i32 1, i32* %8
-	br label %_for_cond_49
-
-_for_cond_49:
-	%377 = load i32, i32* %8
-	%378 = icmp sle i32 %377, 9
-	br i1 %378, label %_for_loop_50, label %_for_next_51
-
-_for_loop_50:
-	%379 = load i32, i32* %8
-	%380 = add nsw i32 %379, 1
-	store i32 %380, i32* %8
-	%381 = load i32*, i32** @color
-	%382 = load i32, i32* %8
-	%383 = getelementptr i32, i32* %381, i32 %382
-	%384 = load i32, i32* %383
-	%385 = icmp eq i32 %384, 0
-	br i1 %385, label %_if_then_52, label %_if_else_53
-
-_if_then_52:
-	%386 = load i32*, i32** @color
-	%387 = load i32, i32* %8
-	%388 = getelementptr i32, i32* %386, i32 %387
-	store i32 1, i32* %388
-	%389 = load i32**, i32*** @make
-	%390 = load i32, i32* %4
-	%391 = getelementptr i32*, i32** %389, i32 %390
-	%392 = load i32*, i32** %391
-	%393 = load i32, i32* %5
-	%394 = getelementptr i32, i32* %392, i32 %393
-	%395 = load i32, i32* %8
-	store i32 %395, i32* %394
-	%396 = load i32, i32* %5
-	%397 = icmp eq i32 %396, 2
-	br i1 %397, label %_if_then_55, label %_if_else_56
-
-_if_then_55:
-	%398 = load i32, i32* %4
-	%399 = add nsw i32 %398, 1
-	%400 = load i32, i32* %6
-	%401 = load i32, i32* %8
-	%402 = add nsw i32 %400, %401
-	call void @search(i32 %399, i32 0, i32 %402)
-	br label %_if_next_57
-
-_if_else_56:
-	%403 = load i32, i32* %4
-	%404 = load i32, i32* %5
-	%405 = add nsw i32 %404, 1
-	%406 = load i32, i32* %6
-	%407 = load i32, i32* %8
-	%408 = add nsw i32 %406, %407
-	call void @search(i32 %403, i32 %405, i32 %408)
-	br label %_if_next_57
-
-_if_next_57:
-	%409 = load i32**, i32*** @make
-	%410 = load i32, i32* %4
-	%411 = getelementptr i32*, i32** %409, i32 %410
-	%412 = load i32*, i32** %411
-	%413 = load i32, i32* %5
-	%414 = getelementptr i32, i32* %412, i32 %413
-	store i32 0, i32* %414
-	%415 = load i32*, i32** @color
-	%416 = load i32, i32* %8
-	%417 = getelementptr i32, i32* %415, i32 %416
-	store i32 0, i32* %417
-	br label %_if_next_54
-
-_if_else_53:
-	br label %_if_next_54
-
-_if_next_54:
-	br label %_for_cond_49
-
-_for_next_51:
-	br label %_if_next_38
-
-_if_next_38:
-	br label %_if_next_14
-
-_if_next_14:
-	br label %_if_next_9
-
-_if_else_8:
-	br label %_if_next_9
-
-_if_next_9:
-	ret void
+_for_next_8:
+	%49 = load %class.vector, %class.vector* %17
+	ret %class.vector %49
 
 }
 
-define internal void @__global_new_init_count() {
-	%1 = call i8* @__malloc(i32 8)
-	%2 = bitcast i8* %1 to i32*
-	store i32 1, i32* %2
-	%3 = getelementptr i32, i32* %2, i32 1
-	store i32* %3, i32** @count
+define void @vector.init(%class.vector* %0, i32* %1) {
+	%3 = alloca i32*
+	store i32* %1, i32** %3
+	%4 = alloca %class.vector*
+	store %class.vector* %0, %class.vector** %4
+	%5 = load %class.vector*, %class.vector** %4
+	%6 = icmp eq i32** %3, null
+	br i1 %6, label %_if_then_1, label %_if_else_2
+
+_if_then_1:
 	ret void
 
-}
+_if_else_2:
+	br label %_if_next_3
 
-define void @origin(i32 %0) {
-	%2 = alloca i32
-	store i32 %0, i32* %2
-	%3 = load i32, i32* %2
-	%4 = mul nsw i32 %3, 4
-	%5 = add nsw i32 %4, 32
-	%6 = call i8* @__malloc(i32 %5)
-	%7 = bitcast i8* %6 to i32*
-	store i32 %3, i32* %7
-	%8 = getelementptr i32, i32* %7, i32 1
-	%9 = bitcast i32* %8 to i32**
-	store i32** %9, i32*** @make
-	store i32 0, i32* @i
-	br label %_for_cond_1
-
-_for_cond_1:
-	%10 = load i32, i32* @i
-	%11 = load i32, i32* %2
-	%12 = icmp slt i32 %10, %11
-	br i1 %12, label %_for_loop_2, label %_for_next_3
-
-_for_loop_2:
-	%13 = load i32, i32* @i
-	%14 = add nsw i32 %13, 1
-	store i32 %14, i32* @i
-	%15 = load i32**, i32*** @make
-	%16 = load i32, i32* @i
-	%17 = getelementptr i32*, i32** %15, i32 %16
-	%18 = load i32, i32* %2
-	%19 = mul nsw i32 %18, 4
-	%20 = add nsw i32 %19, 32
-	%21 = call i8* @__malloc(i32 %20)
-	%22 = bitcast i8* %21 to i32*
-	store i32 %18, i32* %22
-	%23 = getelementptr i32, i32* %22, i32 1
-	store i32* %23, i32** %17
-	store i32 0, i32* @j
+_if_next_3:
+	%7 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%8 = load i32*, i32** %3
+	%9 = getelementptr i32, i32* %8, i32 -1
+	%10 = load i32, i32* %9
+	%11 = mul nsw i32 %10, 4
+	%12 = add nsw i32 %11, 32
+	%13 = call i8* @__malloc(i32 %12)
+	%14 = bitcast i8* %13 to i32*
+	store i32 %10, i32* %14
+	%15 = getelementptr i32, i32* %14, i32 1
+	store i32* %15, i32** %7
+	%16 = alloca i32
+	store i32 0, i32* %16
 	br label %_for_cond_4
 
 _for_cond_4:
-	%24 = load i32, i32* @j
-	%25 = load i32, i32* %2
-	%26 = icmp slt i32 %24, %25
-	br i1 %26, label %_for_loop_5, label %_for_next_6
+	%17 = load i32*, i32** %3
+	%18 = getelementptr i32, i32* %17, i32 -1
+	%19 = load i32, i32* %16
+	%20 = load i32, i32* %18
+	%21 = icmp slt i32 %19, %20
+	br i1 %21, label %_for_loop_5, label %_for_next_6
 
 _for_loop_5:
-	%27 = load i32, i32* @j
-	%28 = add nsw i32 %27, 1
-	store i32 %28, i32* @j
-	%29 = load i32**, i32*** @make
-	%30 = load i32, i32* @i
-	%31 = getelementptr i32*, i32** %29, i32 %30
-	%32 = load i32*, i32** %31
-	%33 = load i32, i32* @j
-	%34 = getelementptr i32, i32* %32, i32 %33
-	store i32 0, i32* %34
+	%22 = load i32, i32* %16
+	%23 = add nsw i32 %22, 1
+	store i32 %23, i32* %16
+	%24 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%25 = load i32*, i32** %24
+	%26 = load i32, i32* %16
+	%27 = getelementptr i32, i32* %25, i32 %26
+	%28 = load i32*, i32** %3
+	%29 = load i32, i32* %16
+	%30 = getelementptr i32, i32* %28, i32 %29
+	%31 = load i32, i32* %30
+	store i32 %31, i32* %27
 	br label %_for_cond_4
 
 _for_next_6:
-	br label %_for_cond_1
+	ret void
 
-_for_next_3:
+}
+
+define %class.vector @vector.scalarInPlaceMultiply(%class.vector* %0, i32 %1) {
+	%3 = alloca i32
+	store i32 %1, i32* %3
+	%4 = alloca %class.vector*
+	store %class.vector* %0, %class.vector** %4
+	%5 = load %class.vector*, %class.vector** %4
+	%6 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%7 = icmp eq i32** %6, null
+	br i1 %7, label %_if_then_1, label %_if_else_2
+
+_if_then_1:
+	%8 = load %class.vector, %class.vector* null
+	ret %class.vector %8
+
+_if_else_2:
+	br label %_if_next_3
+
+_if_next_3:
+	%9 = alloca i32
+	store i32 0, i32* %9
+	br label %_for_cond_4
+
+_for_cond_4:
+	%10 = call i32 @vector.getDim(%class.vector* %5)
+	%11 = load i32, i32* %9
+	%12 = icmp slt i32 %11, %10
+	br i1 %12, label %_for_loop_5, label %_for_next_6
+
+_for_loop_5:
+	%13 = load i32, i32* %9
+	%14 = add nsw i32 %13, 1
+	store i32 %14, i32* %9
+	%15 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%16 = load i32*, i32** %15
+	%17 = load i32, i32* %9
+	%18 = getelementptr i32, i32* %16, i32 %17
+	%19 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%20 = load i32*, i32** %19
+	%21 = load i32, i32* %9
+	%22 = getelementptr i32, i32* %20, i32 %21
+	%23 = load i32, i32* %3
+	%24 = load i32, i32* %22
+	%25 = mul nsw i32 %23, %24
+	store i32 %25, i32* %18
+	br label %_for_cond_4
+
+_for_next_6:
+	%26 = load %class.vector, %class.vector* %5
+	ret %class.vector %26
+
+}
+
+define i8 @vector.copy(%class.vector* %0, %class.vector %1) {
+	%3 = alloca %class.vector
+	store %class.vector %1, %class.vector* %3
+	%4 = alloca %class.vector*
+	store %class.vector* %0, %class.vector** %4
+	%5 = load %class.vector*, %class.vector** %4
+	%6 = icmp eq %class.vector* %3, null
+	br i1 %6, label %_if_then_1, label %_if_else_2
+
+_if_then_1:
+	ret i8 0
+
+_if_else_2:
+	br label %_if_next_3
+
+_if_next_3:
+	%7 = call i32 @vector.getDim(%class.vector* %3)
+	%8 = icmp eq i32 %7, 0
+	br i1 %8, label %_if_then_4, label %_if_else_5
+
+_if_then_4:
+	%9 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	store i32* null, i32** %9
+	br label %_if_next_6
+
+_if_else_5:
+	%10 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%11 = call i32 @vector.getDim(%class.vector* %3)
+	%12 = mul nsw i32 %11, 4
+	%13 = add nsw i32 %12, 32
+	%14 = call i8* @__malloc(i32 %13)
+	%15 = bitcast i8* %14 to i32*
+	store i32 %11, i32* %15
+	%16 = getelementptr i32, i32* %15, i32 1
+	store i32* %16, i32** %10
+	%17 = alloca i32
+	store i32 0, i32* %17
+	br label %_for_cond_7
+
+_for_cond_7:
+	%18 = call i32 @vector.getDim(%class.vector* %5)
+	%19 = load i32, i32* %17
+	%20 = icmp slt i32 %19, %18
+	br i1 %20, label %_for_loop_8, label %_for_next_9
+
+_for_loop_8:
+	%21 = load i32, i32* %17
+	%22 = add nsw i32 %21, 1
+	store i32 %22, i32* %17
+	%23 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%24 = load i32*, i32** %23
+	%25 = load i32, i32* %17
+	%26 = getelementptr i32, i32* %24, i32 %25
+	%27 = getelementptr %class.vector, %class.vector* %3, i32 0, i32 0
+	%28 = load i32*, i32** %27
+	%29 = load i32, i32* %17
+	%30 = getelementptr i32, i32* %28, i32 %29
+	%31 = load i32, i32* %30
+	store i32 %31, i32* %26
+	br label %_for_cond_7
+
+_for_next_9:
+	br label %_if_next_6
+
+_if_next_6:
+	ret i8 1
+
+}
+
+define i32 @vector.dot(%class.vector* %0, %class.vector %1) {
+	%3 = alloca %class.vector
+	store %class.vector %1, %class.vector* %3
+	%4 = alloca %class.vector*
+	store %class.vector* %0, %class.vector** %4
+	%5 = load %class.vector*, %class.vector** %4
+	%6 = alloca i32
+	store i32 0, i32* %6
+	%7 = alloca i32
+	store i32 0, i32* %7
+	br label %_while_cond_1
+
+_while_cond_1:
+	%8 = call i32 @vector.getDim(%class.vector* %5)
+	%9 = load i32, i32* %6
+	%10 = icmp slt i32 %9, %8
+	br i1 %10, label %while_loop_2, label %_while_next_3
+
+while_loop_2:
+	%11 = getelementptr %class.vector, %class.vector* %5, i32 0, i32 0
+	%12 = load i32*, i32** %11
+	%13 = load i32, i32* %6
+	%14 = getelementptr i32, i32* %12, i32 %13
+	%15 = getelementptr %class.vector, %class.vector* %3, i32 0, i32 0
+	%16 = load i32*, i32** %15
+	%17 = load i32, i32* %6
+	%18 = getelementptr i32, i32* %16, i32 %17
+	%19 = load i32, i32* %14
+	%20 = load i32, i32* %18
+	%21 = mul nsw i32 %19, %20
+	store i32 %21, i32* %7
+	%22 = load i32, i32* %6
+	%23 = add nsw i32 %22, 1
+	store i32 %23, i32* %6
+	br label %_while_cond_1
+
+_while_next_3:
+	%24 = load i32, i32* %7
+	ret i32 %24
+
+}
+
+define void @vector.build(%class.vector* %0) {
 	ret void
 
 }
 
 define i32 @main() {
-	call void @_GLOBAL__sub_I_example.cpp()
-	%1 = load i32*, i32** @count
-	%2 = getelementptr i32, i32* %1, i32 0
-	store i32 0, i32* %2
-	call void @origin(i32 3)
-	call void @search(i32 0, i32 0, i32 0)
-	%3 = load i32*, i32** @count
-	%4 = getelementptr i32, i32* %3, i32 0
-	%5 = load i32, i32* %4
-	%6 = call i8* @toString(i32 %5)
-	call void @println(i8* %6)
+	%1 = alloca %class.vector
+	%2 = call i8* @__malloc(i32 4)
+	%3 = bitcast i8* %2 to %class.vector*
+	call void @vector.build(%class.vector* %3)
+	%4 = load %class.vector, %class.vector* %3
+	store %class.vector %4, %class.vector* %1
+	%5 = alloca i32*
+	%6 = call i8* @__malloc(i32 44)
+	%7 = bitcast i8* %6 to i32*
+	store i32 10, i32* %7
+	%8 = getelementptr i32, i32* %7, i32 1
+	store i32* %8, i32** %5
+	%9 = alloca i32
+	store i32 0, i32* %9
+	br label %_for_cond_1
+
+_for_cond_1:
+	%10 = load i32, i32* %9
+	%11 = icmp slt i32 %10, 10
+	br i1 %11, label %_for_loop_2, label %_for_next_3
+
+_for_loop_2:
+	%12 = load i32, i32* %9
+	%13 = add nsw i32 %12, 1
+	store i32 %13, i32* %9
+	%14 = load i32*, i32** %5
+	%15 = load i32, i32* %9
+	%16 = getelementptr i32, i32* %14, i32 %15
+	%17 = load i32, i32* %9
+	%18 = sub nsw i32 9, %17
+	store i32 %18, i32* %16
+	br label %_for_cond_1
+
+_for_next_3:
+	%19 = load i32*, i32** %5
+	call void @vector.init(%class.vector* %1, i32* %19)
+	%20 = getelementptr [11 x i8], [11 x i8]* @str_3, i32 0, i32 0
+	call void @print(i8* %20)
+	%21 = call i8* @vector.tostring(%class.vector* %1)
+	call void @println(i8* %21)
+	%22 = alloca %class.vector
+	%23 = call i8* @__malloc(i32 4)
+	%24 = bitcast i8* %23 to %class.vector*
+	call void @vector.build(%class.vector* %24)
+	%25 = load %class.vector, %class.vector* %24
+	store %class.vector %25, %class.vector* %22
+	%26 = load %class.vector, %class.vector* %1
+	%27 = call i8 @vector.copy(%class.vector* %22, %class.vector %26)
+	%28 = call i8 @vector.set(%class.vector* %22, i32 3, i32 817)
+	%29 = trunc i8 %28 to i1
+	br i1 %29, label %_if_then_4, label %_if_else_5
+
+_if_then_4:
+	%30 = getelementptr [9 x i8], [9 x i8]* @str_4, i32 0, i32 0
+	call void @println(i8* %30)
+	br label %_if_next_6
+
+_if_else_5:
+	br label %_if_next_6
+
+_if_next_6:
+	%31 = getelementptr [11 x i8], [11 x i8]* @str_5, i32 0, i32 0
+	call void @print(i8* %31)
+	%32 = call i8* @vector.tostring(%class.vector* %22)
+	call void @println(i8* %32)
+	%33 = getelementptr [8 x i8], [8 x i8]* @str_6, i32 0, i32 0
+	call void @print(i8* %33)
+	%34 = load %class.vector, %class.vector* %22
+	%35 = call %class.vector @vector.add(%class.vector* %1, %class.vector %34)
+	%36 = alloca %class.vector
+	store %class.vector %35, %class.vector* %36
+	%37 = call i8* @vector.tostring(%class.vector* %36)
+	call void @println(i8* %37)
+	%38 = getelementptr [8 x i8], [8 x i8]* @str_7, i32 0, i32 0
+	call void @print(i8* %38)
+	%39 = load %class.vector, %class.vector* %22
+	%40 = call i32 @vector.dot(%class.vector* %1, %class.vector %39)
+	%41 = call i8* @toString(i32 %40)
+	call void @println(i8* %41)
+	%42 = getelementptr [15 x i8], [15 x i8]* @str_8, i32 0, i32 0
+	call void @print(i8* %42)
+	%43 = call %class.vector @vector.scalarInPlaceMultiply(%class.vector* %22, i32 8)
+	%44 = alloca %class.vector
+	store %class.vector %43, %class.vector* %44
+	%45 = call i8* @vector.tostring(%class.vector* %44)
+	call void @println(i8* %45)
 	ret i32 0
+
+}
+
+define i8* @vector.tostring(%class.vector* %0) {
+	%2 = alloca %class.vector*
+	store %class.vector* %0, %class.vector** %2
+	%3 = load %class.vector*, %class.vector** %2
+	%4 = alloca i8*
+	%5 = getelementptr [3 x i8], [3 x i8]* @str_0, i32 0, i32 0
+	store i8* %5, i8** %4
+	%6 = call i32 @vector.getDim(%class.vector* %3)
+	%7 = icmp sgt i32 %6, 0
+	br i1 %7, label %_if_then_1, label %_if_else_2
+
+_if_then_1:
+	%8 = getelementptr %class.vector, %class.vector* %3, i32 0, i32 0
+	%9 = load i32*, i32** %8
+	%10 = getelementptr i32, i32* %9, i32 0
+	%11 = load i32, i32* %10
+	%12 = call i8* @toString(i32 %11)
+	%13 = load i8*, i8** %4
+	%14 = call i8* @__str_add(i8* %13, i8* %12)
+	store i8* %14, i8** %4
+	br label %_if_next_3
+
+_if_else_2:
+	br label %_if_next_3
+
+_if_next_3:
+	%15 = alloca i32
+	store i32 1, i32* %15
+	br label %_for_cond_4
+
+_for_cond_4:
+	%16 = call i32 @vector.getDim(%class.vector* %3)
+	%17 = load i32, i32* %15
+	%18 = icmp slt i32 %17, %16
+	br i1 %18, label %_for_loop_5, label %_for_next_6
+
+_for_loop_5:
+	%19 = load i32, i32* %15
+	%20 = add nsw i32 %19, 1
+	store i32 %20, i32* %15
+	%21 = load i8*, i8** %4
+	%22 = getelementptr [3 x i8], [3 x i8]* @str_1, i32 0, i32 0
+	%23 = call i8* @__str_add(i8* %21, i8* %22)
+	%24 = getelementptr %class.vector, %class.vector* %3, i32 0, i32 0
+	%25 = load i32*, i32** %24
+	%26 = load i32, i32* %15
+	%27 = getelementptr i32, i32* %25, i32 %26
+	%28 = load i32, i32* %27
+	%29 = call i8* @toString(i32 %28)
+	%30 = call i8* @__str_add(i8* %23, i8* %29)
+	store i8* %30, i8** %4
+	br label %_for_cond_4
+
+_for_next_6:
+	%31 = load i8*, i8** %4
+	%32 = getelementptr [3 x i8], [3 x i8]* @str_2, i32 0, i32 0
+	%33 = call i8* @__str_add(i8* %31, i8* %32)
+	store i8* %33, i8** %4
+	%34 = load i8*, i8** %4
+	ret i8* %34
+
+}
+
+define i8 @vector.set(%class.vector* %0, i32 %1, i32 %2) {
+	%4 = alloca i32
+	store i32 %1, i32* %4
+	%5 = alloca i32
+	store i32 %2, i32* %5
+	%6 = alloca %class.vector*
+	store %class.vector* %0, %class.vector** %6
+	%7 = load %class.vector*, %class.vector** %6
+	%8 = call i32 @vector.getDim(%class.vector* %7)
+	%9 = load i32, i32* %4
+	%10 = icmp slt i32 %8, %9
+	br i1 %10, label %_if_then_1, label %_if_else_2
+
+_if_then_1:
+	ret i8 0
+
+_if_else_2:
+	br label %_if_next_3
+
+_if_next_3:
+	%11 = getelementptr %class.vector, %class.vector* %7, i32 0, i32 0
+	%12 = load i32*, i32** %11
+	%13 = load i32, i32* %4
+	%14 = getelementptr i32, i32* %12, i32 %13
+	%15 = load i32, i32* %5
+	store i32 %15, i32* %14
+	ret i8 1
 
 }
 

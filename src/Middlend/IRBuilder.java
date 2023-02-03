@@ -24,6 +24,7 @@ public class IRBuilder implements ASTVisitor {
     private function currFunc = null;
     private IRClass currClass = null;
     private register currClassReg = null;
+    private ArrayList<String> currClassFuncName = new ArrayList<>();
 
     public function mainFn = null;
     public boolean isMain = false;
@@ -134,6 +135,7 @@ public class IRBuilder implements ASTVisitor {
         currBlk = currFunc.rootBlock;
 
         if (currClass != null) {
+            currClassFuncName.add(it.funcName);
             IRPtr classPtr = new IRPtr(currClass);
             register thisVar = new register("this", classPtr);
             currFunc.paraList.add(thisVar);
@@ -166,8 +168,9 @@ public class IRBuilder implements ASTVisitor {
         it.stmts.forEach(x -> x.accept(this));
         if (currFunc.returnReg == null) {
             currFunc.returnReg = isMain ? new consInt(0) : new consNull(null);
+            currBlk.push_back(new ret(currFunc.returnReg));
         }
-        currBlk.push_back(new ret(currFunc.returnReg));
+        if (currBlk.tailStmt == null) currBlk.push_back(new ret(currFunc.returnReg));
         currScope = currScope.parentScope;
         isMain = false;
         currFunc = null;
@@ -182,7 +185,9 @@ public class IRBuilder implements ASTVisitor {
         }
         register.reg_cnt++;
         for (register e : currFunc.paraList) {
-            if (e.irType instanceof IRPtr && ((IRPtr)e.irType).pointDown() instanceof IRClass) continue;
+            if (e.irType instanceof IRPtr && ((IRPtr)e.irType).pointDown() instanceof IRClass) {
+                if (e.identity.equals("this")) continue;
+            }
             register t = new register(new IRPtr(e.irType));
             currBlk.push_back(new alloca(e.irType, t));
             currBlk.push_back(new store(t,e));
@@ -284,7 +289,7 @@ public class IRBuilder implements ASTVisitor {
     }
 
     public void visit(ExprStmtNode it){
-        it.exprNode.accept(this);
+        if (it.exprNode != null) it.exprNode.accept(this);
     }
 
     public void visit(ForStmtNode it){
@@ -389,10 +394,13 @@ public class IRBuilder implements ASTVisitor {
                 currBlk.push_back(new getelementptr(currFunc.returnReg, it.expr.val, new consInt(0)));
             } else {
                 currFunc.returnReg = new register(currFunc.returnType);
+                if (it.expr.val instanceof consNull) {
+                    it.expr.val = new consNull(new IRPtr(currFunc.returnType));
+                }
                 currBlk.push_back(new load(currFunc.returnReg, it.expr.val));
             }
         }
-
+        currBlk.push_back(new ret(currFunc.returnReg));
 
     }
 
@@ -481,7 +489,7 @@ public class IRBuilder implements ASTVisitor {
 
     public void visit(AtomExprNode it) {
         if (it.str.equals("this")) {
-            it.val = currScope.getEntity("this");
+            it.val = currClassReg;
             return;
         }
         if (it.type.isConst) { //处理常数
@@ -501,11 +509,16 @@ public class IRBuilder implements ASTVisitor {
                 }
             }
         } else {
-            //todo
-            //不确定
-            if (currClass != null && currClass.get_member(it.str) != null) {
-                it.val = new register(new IRPtr(currClass.get_member(it.str)));
-                currBlk.push_back(new getelementptr(it.val, currClassReg, new consInt(0), new consInt(currClass.memberMap.get(it.str))));
+            if (currClass != null) {
+                if (currClass.get_member(it.str) != null) {
+                    it.val = new register(new IRPtr(currClass.get_member(it.str)));
+                    currBlk.push_back(new getelementptr(it.val, currClassReg, new consInt(0), new consInt(currClass.memberMap.get(it.str))));
+                } else if (currScope.getEntity(it.str) != null) {
+                    it.val = currScope.getEntity(it.str);
+                } else { //函数名
+                    if (currClassFuncName.contains(it.str))
+                        it.str = currClass.className + "." + it.str;
+                }
             } else {
                 //register dest = new register(((IRPtr) currScope.getEntity(it.str).irType).pointDown());
                 //currBlk.push_back(new load(dest, currScope.getEntity(it.str)));
@@ -529,7 +542,7 @@ public class IRBuilder implements ASTVisitor {
         it.rhs.accept(this);
 
         entity l, r;
-        if (sameType(it.lhs.val.irType, it.lhs.type)) {
+        if (sameType(it.lhs.val.irType, it.lhs.type) || it.rhs.val instanceof consNull) {
             l = it.lhs.val;
         } else if (it.lhs.val instanceof consString) {
             l = new register(new IRPtr(new IRInt(8)));
@@ -543,7 +556,8 @@ public class IRBuilder implements ASTVisitor {
                 currBlk.push_back(new load(l, it.lhs.val));
             }
         }
-        if (sameType(it.rhs.val.irType, it.rhs.type)) {
+
+        if (sameType(it.rhs.val.irType, it.rhs.type) || it.lhs.val instanceof consNull) {
             r = it.rhs.val;
         } else if (it.rhs.val instanceof consString) {
             r = new register(new IRPtr(new IRInt(8)));
@@ -736,16 +750,33 @@ public class IRBuilder implements ASTVisitor {
                     tmp = tt;
                 }
                 it.val = tmp;
-                //it.val = new register(new IRInt(32));
-                //currBlk.push_back(new load(it.val, tmp));
                 return;
             } else {
-                IRClass type = (IRClass) ((IRPtr) mem.name.val.irType).pointDown();
+                IRClass type;
+                if (mem.name.val.irType instanceof IRPtr) {
+                    type = (IRClass) ((IRPtr) mem.name.val.irType).pointDown();
+                } else {
+                    type = (IRClass) mem.name.val.irType;
+                }
                 callFunc = new call(null, mem.member, type.className);
-                callFunc.paramList.add(mem.name.val);
+                if (mem.name.val.irType instanceof IRClass) {
+                    register tmp = new register(new IRPtr(mem.name.val.irType));
+                    currBlk.push_back(new alloca(mem.name.val.irType, tmp));
+                    currBlk.push_back(new store(tmp, mem.name.val));
+                    callFunc.paramList.add(tmp);
+                } else {
+                    callFunc.paramList.add(mem.name.val);
+                }
             }
         } else {
+            String origin = it.funcName.str;
+            if (origin.equals("toString")) {
+                int j = 1;
+            }
+            it.funcName.accept(this);
             callFunc = new call(null, it.funcName.str);
+            if (currClass != null && currClassFuncName.contains(origin))
+                callFunc.paramList.add(currClassReg);
         }
         if (it.lists != null) {
             for (ExprNode x : it.lists.exprs) {

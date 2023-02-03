@@ -28,7 +28,7 @@ public class Compiler {
     public static void main(String[] args) throws Exception{
         //String name="src/testcase.mx";
         //String name = "src/myself.mx";
-        //String name = "src/codegen/t24.mx";
+        //String name = "src/codegen/t61.mx";
         //InputStream input=new FileInputStream(name);
         InputStream input = System.in;
         try {

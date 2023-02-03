@@ -131,8 +131,12 @@ public class IRPrinter implements IRVisitor{
     public void visit(jump it){
         out.print("\tbr label %" + it.destination + "\n");
     }
-    public void visit(ret it){
-        out.print("\tret " + (it.value instanceof consNull ? "void" : it.value.printWithType()) + "\n");
+    public void visit(ret it) {
+        if (it.value instanceof consNull && ((consNull) it.value).type == null) {
+            out.print("\tret void\n");
+        } else {
+            out.print("\tret " + it.value.printWithType() + "\n");
+        }
     }
     public void visit(loop it){
         out.print("\tbr label %" + it.condition + "\n");
