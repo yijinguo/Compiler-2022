@@ -24,7 +24,8 @@ public class IRPrinter implements IRVisitor{
         //全局变量
         for (Map.Entry<String, entity> entry : IR.gScope.entities.entrySet()){
             if (entry.getValue() instanceof globalVar it) {
-                out.print(it + " = global " + it.init.printWithType() + "\n");
+                out.print(it + " = global " + ((IRPtr)it.irType).pointDown() + " " + it.init + "\n");
+                //out.print(it + " = global " + it.init.printWithType() + "\n");
             } else if (entry.getValue() instanceof consString it) {
                 out.print(it + " = private unnamed_addr constant " + it.printGlobal() + "\n");
             }
@@ -49,7 +50,8 @@ public class IRPrinter implements IRVisitor{
 
 
     public void visit(function it){
-        out.print("define " + it.returnType + " @" + it.funcName + "(");
+        if (it.internal) out.print("define internal " + it.returnType + " @" + it.funcName + "(");
+        else out.print("define " + it.returnType + " @" + it.funcName + "(");
         boolean first = true;
         for (entity e : it.paraList) {
             if (first) first = false;

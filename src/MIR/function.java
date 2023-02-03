@@ -12,6 +12,7 @@ public class function{
     public IRType returnType;
     public entity returnReg;
     public String funcName;
+    public boolean internal = false;
     public ArrayList<register> paraList = new ArrayList<>();
     public LinkedList<entity> entities = new LinkedList<>();
     public block rootBlock = null;
@@ -22,6 +23,14 @@ public class function{
         this.funcName = funcName;
         rootBlock = new block(0);
         blocks.add(rootBlock);
+    }
+
+    public function(IRType returnType, String funcName, boolean internal){
+        this.returnType = returnType;
+        this.funcName = funcName;
+        rootBlock = new block(0);
+        blocks.add(rootBlock);
+        this.internal = internal;
     }
 
     public void push_entity(String name, entity entry){

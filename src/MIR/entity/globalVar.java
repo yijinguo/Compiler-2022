@@ -37,6 +37,6 @@ public class globalVar extends register{
 
     @Override
     public String printWithType(){
-        return irType.toString() + this;
+        return irType.toString() + " " + this;
     }
 }

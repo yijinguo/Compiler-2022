@@ -54,7 +54,7 @@ public class Compiler {
             semanticChecker.visit(root);
 
             //ast to ir
-            
+
             IRBuilder irBuilder = new IRBuilder(GlobalScope);
             irBuilder.visit(root);
             PrintStream ir_out = new PrintStream(new FileOutputStream("output.ll"));
