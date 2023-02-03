@@ -7,8 +7,9 @@ public class consNull extends constant{
 
     public IRType type = null;
 
-    public consNull(){
+    public consNull(IRType type){
         super(new IRVoid());
+        this.type = type;
     }
 
     @Override

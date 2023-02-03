@@ -23,8 +23,10 @@ public class globalVar extends register{
                 case 1 -> init = new consBool(false);
                 default -> {}
             }
-        } else if (tmp instanceof IRPtr) {
+        } else if (tmp.name.equals("i8*")) {
             init = new consString("");
+        } else if (tmp instanceof IRPtr) {
+            init = new consNull(irType);
         } else if (tmp instanceof IRClass) {
             init = null;
         }

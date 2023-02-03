@@ -11,8 +11,8 @@ public class consString extends constant{
     public static int cnt = 0;
 
     public consString(String value){
-        super(new IRPtr(new IRArray(new IRInt(8), value.length() - 1)));
-        this.value = value.substring(1, value.length()-1);
+        super(new IRPtr(new IRArray(new IRInt(8), (!value.equals("") && value.charAt(0) == '"') ? value.length() - 1 : value.length() + 1)));
+        this.value = (!value.equals("") && value.charAt(0) == '"') ? value.substring(1, value.length()-1) : value;
         this.id = cnt++;
     }
 

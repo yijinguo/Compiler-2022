@@ -28,6 +28,7 @@ public class Compiler {
     public static void main(String[] args) throws Exception{
         //String name="src/testcase.mx";
         //String name = "src/myself.mx";
+        //String name = "src/codegen/t24.mx";
         //InputStream input=new FileInputStream(name);
         InputStream input = System.in;
         try {
@@ -63,16 +64,16 @@ public class Compiler {
             new BuiltinIRPrinter(ir_out);
 
             //ir to asm
-
+/*
             InstSelector selector = new InstSelector(irBuilder);
             RegAlloca regAlloca = new RegAlloca(selector.program);
             regAlloca.work();
 
-            PrintStream asm_out = new PrintStream(new FileOutputStream("output.s"));
+            PrintStream asm_out = new PrintStream(new FileOutputStream("test.s"));
             ASMPrinter asmPrinter = new ASMPrinter(asm_out);
             asmPrinter.print(selector.program);
-            new BuiltinASMPrinter(asm_out);
-
+            //new BuiltinASMPrinter(asm_out);
+*/
         }catch (Error err){
 //            System.out.println(err.errorMsg());
             throw err;
