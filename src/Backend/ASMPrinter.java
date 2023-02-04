@@ -13,8 +13,14 @@ public class ASMPrinter {
 
     public void print(ASMProgram program){
         //todo
+        out.print("\t.test\n");
         program.globals.forEach(x->out.print(x));
-        program.functions.forEach(x->out.print(x));
+        program.functions.forEach(x->{
+            if (x.funcName.equals("_GLOBAL__sub_I_example.cpp")) out.print(x);
+        });
+        program.functions.forEach(x->{
+            if (!x.funcName.equals("_GLOBAL__sub_I_example.cpp")) out.print(x);
+        });
     }
 
 }

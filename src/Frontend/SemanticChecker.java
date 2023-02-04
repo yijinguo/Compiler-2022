@@ -258,7 +258,7 @@ public class SemanticChecker implements ASTVisitor {
                     throw new syntaxError("Unmatched AssignType", it.pos);
             }
         } else {
-            if (!it.lhs.type.isArray && !it.lhs.type.isClass) {
+            if (!it.lhs.type.isArray && !(it.lhs instanceof ArrayExprNode) && !it.lhs.type.isClass) {
                 throw new syntaxError("Unmatched AssignType", it.pos);
             }
         }
@@ -310,7 +310,7 @@ public class SemanticChecker implements ASTVisitor {
         }
         if (it.op.equals("==") || it.op.equals("!=")) {
             if (!lType.equals(rType)) {
-                if (rType.equals(NullType) && lType.isClass) {
+                if (rType.equals(NullType) && (lType.isClass || lType.isArray || it.lhs instanceof ArrayExprNode)) {
                     it.type = BoolType;
                     return;
                 }

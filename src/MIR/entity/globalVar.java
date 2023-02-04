@@ -28,7 +28,8 @@ public class globalVar extends register{
         } else if (tmp instanceof IRPtr) {
             init = new consNull(irType);
         } else if (tmp instanceof IRClass) {
-            init = null;
+            //init = null;
+            init = new consNull(irType);
         }
     }
 

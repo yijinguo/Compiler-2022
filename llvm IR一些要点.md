@@ -4,6 +4,12 @@ From:[Evian-Zhang/llvm-ir-tutorial: LLVM IR入门指南 (github.com)](https://gi
 
 Yx：[ZYHowell/Yx at 1c1a74e8e636cf64d2e6f73975cfb2cf50f69cca (github.com)](https://github.com/ZYHowell/Yx/tree/1c1a74e8e636cf64d2e6f73975cfb2cf50f69cca)
 
+ravel:  [ravel/a_plus_b.s at bd8e38e0cfd57dd6b1d108b224c1c4966485de96 · Yveh/ravel (github.com)](https://github.com/Yveh/ravel/blob/bd8e38e0cfd57dd6b1d108b224c1c4966485de96/test/asm/a_plus_b.s)
+
+编译语言对照   [Compiler Explorer (godbolt.org)](https://godbolt.org/)
+
+数据点：  [ZYHowell/Compiler-2021-testcases at 56dd53dda3a26faa14e22d335d1c98106fcdedf6 (github.com)](https://github.com/ZYHowell/Compiler-2021-testcases/tree/56dd53dda3a26faa14e22d335d1c98106fcdedf6)
+
 [TOC]
 
 我们写编译器的最终目的，是将源代码交给LLVM后端处理，让LLVM后端帮我们优化，并编译到相应的平台。而LLVM后端为我们提供的中介，就是LLVM IR。我们只需要将内存中的AST转化为LLVM IR就可以放手不管了，接下来的所有事都是LLVM后端帮我们实现。

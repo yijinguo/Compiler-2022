@@ -1,42 +1,51 @@
-        #.file   "main.c"
-        #.option nopic
-        .text
-        .section        .rodata
-        .align  2
-.LC0:
-        .string "%d %d"
-        .align  2
-.LC1:
-        .string "%d\n"
-        .text
-        .align  2
-        .globl  main
-        .type   main, @function
+	.test
+	.globl	foo
+	.type	foo, @function
+foo:
+	addi	sp, sp, -28
+	sw	ra, 0(sp)
+	li	t0, 0
+	add	t0, sp, t0
+	sw	t0, 8(sp)
+	lw	t1, 8(sp)
+	sw	a0, 0(t1)
+	li	t0, 4
+	add	t0, sp, t0
+	sw	t0, 12(sp)
+	lw	t1, 12(sp)
+	sw	a1, 0(t1)
+	lw	t1, 8(sp)
+	lw	t0, 0(t1)
+	sw	t0, 16(sp)
+	lw	t1, 12(sp)
+	lw	t0, 0(t1)
+	sw	t0, 20(sp)
+	lw	t1, 16(sp)
+	lw	t0, 20(sp)
+	add nsw	t0, t1, t0
+	sw	t0, 24(sp)
+	lw	t1, 24(sp)
+	mv	a0, t1
+	lw	ra, 0(sp)
+	addi	sp, sp, 28
+	ret
+	.size	foo, .-foo
+
+	.globl	main
+	.type	main, @function
 main:
-        addi    sp,sp,-32
-        sw      ra,28(sp)
-        sw      s0,24(sp)
-        addi    s0,sp,32
-        addi    a4,s0,-24
-        addi    a5,s0,-20
-        mv      a2,a4
-        mv      a1,a5
-        lui     a5,%hi(.LC0)
-        addi    a0,a5,%lo(.LC0)
-        call    __isoc99_scanf
-        lw      a4,-20(s0)
-        lw      a5,-24(s0)
-        add     a5,a4,a5
-        mv      a1,a5
-        lui     a5,%hi(.LC1)
-        addi    a0,a5,%lo(.LC1)
-        call    printf
-        li      a5,0
-        mv      a0,a5
-        lw      ra,28(sp)
-        lw      s0,24(sp)
-        addi    sp,sp,32
-        jr      ra
-        .size   main, .-main
-        .ident  "GCC: (GNU) 9.2.0"
-        .section        .note.GNU-stack,"",@progbits
+	addi	sp, sp, -4
+	sw	ra, 0(sp)
+	li	t1, 1
+	mv	a0, t1
+	li	t1, 2
+	mv	a1, t1
+	call	foo
+	mv	t0, a0
+	sw	t0, 0(sp)
+	lw	t1, 0(sp)
+	mv	a0, t1
+	lw	ra, 0(sp)
+	addi	sp, sp, 4
+	ret
+	.size	main, .-main

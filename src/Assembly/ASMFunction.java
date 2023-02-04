@@ -26,11 +26,20 @@ public class ASMFunction {
     }
 
     public String toString(){
-        String ret = funcName + ":\n";
+        String ret;
+        if (funcName.equals("_GLOBAL__sub_I_example.cpp")) {
+            ret = "\t.section\t.rodata\n";
+        } else {
+            ret = "\t.globl\t" + funcName + "\n\t.type\t" + funcName + ", @function\n";
+        }
+        ret += funcName + ":\n";
         for (ASMBlock b : Blocks) {
             ret += b.print();
         }
-        ret += "\tret\n\n";
+        ret += "\tret\n";
+        if (!funcName.equals("_GLOBAL__sub_I_example.cpp")) {
+            ret += "\t.size\t" + funcName + ", .-" + funcName + "\n\n";
+        }
         return ret;
     }
 

@@ -10,7 +10,6 @@ import MIR.entity.*;
 import MIR.terminalStmt.*;
 import MIR.type.IRClass;
 import MIR.type.IRInt;
-import MIR.type.IRVoid;
 import Middlend.IRBuilder;
 import MIR.*;
 
@@ -77,7 +76,7 @@ public class InstSelector implements IRVisitor {
 
         int maxCnt = 0;
         for (block blk : it.blocks) {
-            blockList.put(blk, new ASMBlock(".L" + blk.label));
+            blockList.put(blk, new ASMBlock(blk.label == 0 ? null : ".L" + blk.label));
             for (statement inst : blk.stmtList)
                 if (inst instanceof call)
                     maxCnt = Math.max(maxCnt, ((call) inst).paramList.size());
@@ -145,7 +144,7 @@ public class InstSelector implements IRVisitor {
                 }
                 if (it.op2 instanceof consInt && ((consInt) it.op2).value < 1<<11
                         && ((consInt) it.op2).value >= -(1<<11)) {
-                    currBlk.addInst(new Unary(it.op, getReg(it.lhs), getReg(it.op1), new Imm(((consInt) it.op2).value)));
+                    currBlk.addInst(new Unary(it.op + "i", getReg(it.lhs), getReg(it.op1), new Imm(((consInt) it.op2).value)));
                     return;
                 }
             }

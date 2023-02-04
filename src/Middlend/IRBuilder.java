@@ -232,12 +232,23 @@ public class IRBuilder implements ASTVisitor {
         } else { //全局变量
             globalVar var = new globalVar(it.varName, it.type.irType);
             if (it.init != null) {
-                if (it.init instanceof NewExprNode) {
-                    var.init = new consNull(it.type.irType);
-                    currFunc = new function(new IRVoid(), "__global_new_init_"+it.varName, true);
-                    currBlk = currFunc.rootBlock;
-                    register.reg_cnt = 0;
-                    it.init.accept(this);
+                currFunc = new function(new IRVoid(), "__global_new_init_"+it.varName, true);
+                currBlk = currFunc.rootBlock;
+                register.reg_cnt = 0;
+                it.init.accept(this);
+                if (it.init.val instanceof constant) {
+                    var.init = it.init.val;
+                } else /*if (it.init instanceof NewExprNode)*/ {
+                    var.initial();
+                    if (var.init == null) {
+                        //todo
+                        //不确定
+                        var.ifClass = true;
+                        var.build = classTypes.get(it.type.irType.name).build;
+                    }
+                    //var.init = new consNull(it.type.irType);
+                    //this 3
+
                     currBlk.push_back(new store(var, it.init.val));
                     currBlk.push_back(new ret(new consNull(null)));
                     currBlk = null;
@@ -249,12 +260,9 @@ public class IRBuilder implements ASTVisitor {
                     }
                     currBlk = currFunc.rootBlock;
                     currBlk.push_back(new call(null, "__global_new_init_"+it.varName));
-                    currFunc = null;
-                    currBlk = null;
-                } else {
-                    it.init.accept(this);
-                    var.init = it.init.val;
                 }
+                currFunc = null;
+                currBlk = null;
             } else {
                 var.initial();
                 if (var.init == null) {
