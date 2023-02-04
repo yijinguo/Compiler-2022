@@ -87,6 +87,8 @@ public class InstSelector implements IRVisitor {
             if (i < 8) {
                 it.paraList.get(i).asmReg = PhyReg.regMap.get("a" + i);
             } else {
+                //todo
+                //这里该怎么申请VirtualReg？
                 it.paraList.get(i).asmReg = new VirtualReg(i);
             }
         }
@@ -100,19 +102,15 @@ public class InstSelector implements IRVisitor {
             currBlk = null;
         }
         currFunc.virtualRegCnt = VirtualReg.cnt;
-        currFunc.totalStack = currFunc.paramsUsed + currFunc.allocaUsed + currFunc.virtualRegCnt * 4;
+        currFunc.totalStack = currFunc.paramsUsed + currFunc.allocaUsed + currFunc.virtualRegCnt * 4 + 4;
 
+        ASMBlock firstBlk = currFunc.Blocks.get(0), lastBlk = currFunc.Blocks.get(currFunc.Blocks.size() - 1);
         if (currFunc.totalStack < 1 << 11) {
-            currFunc.Blocks.get(0).insts.addFirst(new Unary("addi", PhyReg.regMap.get("sp"),
-                    PhyReg.regMap.get("sp"), new Imm(-currFunc.totalStack)));
-            currFunc.Blocks.get(currFunc.Blocks.size() - 1).insts.add(new Unary("addi", PhyReg.regMap.get("sp"),
-                    PhyReg.regMap.get("sp"), new Imm(currFunc.totalStack)));
+            firstBlk.insts.addFirst(new Unary("addi", PhyReg.regMap.get("sp"), PhyReg.regMap.get("sp"), new Imm(-currFunc.totalStack)));
+            lastBlk.insts.add(new Unary("addi", PhyReg.regMap.get("sp"), PhyReg.regMap.get("sp"), new Imm(currFunc.totalStack)));
         } else {
-            currFunc.Blocks.get(0).insts.addFirst(new Binary("add", PhyReg.regMap.get("sp"),
-                    PhyReg.regMap.get("sp"), new VirtualImm(-currFunc.totalStack)));
-            currFunc.Blocks.get(currFunc.Blocks.size() - 1).insts.add(new Binary("add", PhyReg.regMap.get("sp"),
-                    PhyReg.regMap.get("sp"), new VirtualImm(currFunc.totalStack)));
-            currFunc.Blocks.get(currFunc.Blocks.size() - 1).insts.add(new Ret());
+            firstBlk.insts.addFirst(new Binary("add", PhyReg.regMap.get("sp"), PhyReg.regMap.get("sp"), new VirtualImm(-currFunc.totalStack)));
+            lastBlk.insts.add(new Binary("add", PhyReg.regMap.get("sp"), PhyReg.regMap.get("sp"), new VirtualImm(currFunc.totalStack)));
         }
 
         program.functions.add(currFunc);

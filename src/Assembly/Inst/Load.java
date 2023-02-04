@@ -4,7 +4,7 @@ import Assembly.Operand.Imm;
 import Assembly.Operand.Reg;
 
 public class Load extends Inst{
-    int type;
+    int type; //1 - b; 4 - w
 
     public Load(int type, Reg rd, Reg rs1, Imm imm){
         this.type = type;

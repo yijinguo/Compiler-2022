@@ -81,7 +81,11 @@ public class IRPrinter implements IRVisitor{
     }
     public void visit(binary it){
         //if (!it.isConst)
-            out.print("\t" + it.lhs + " = " + it.op + " " + it.lhs.irType + " " + it.op1 + ", " + it.op2 + "\n");
+        String op = it.op;
+        if (op.equals("add") || op.equals("mul") || op.equals("sub")) {
+            op += " nsw";
+        }
+        out.print("\t" + it.lhs + " = " + op + " " + it.lhs.irType + " " + it.op1 + ", " + it.op2 + "\n");
     }
 
     public void visit(icmp it){

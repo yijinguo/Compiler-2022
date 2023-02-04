@@ -22,11 +22,11 @@ public class binary extends statement{
         this.op1 = op1;
         this.op2 = op2;
         switch (op) {
-            case "*" -> this.op = "mul nsw";
+            case "*" -> this.op = "mul";
             case "/" -> this.op = "sdiv";
             case "%" -> this.op = "srem";
-            case "+", "add" -> this.op = "add nsw";
-            case "-", "sub" -> this.op = "sub nsw";
+            case "+", "add" -> this.op = "add";
+            case "-", "sub" -> this.op = "sub";
             case "<<" -> this.op = "shl";
             case ">>" -> this.op = "ashr";
             case "&" -> this.op = "and";
