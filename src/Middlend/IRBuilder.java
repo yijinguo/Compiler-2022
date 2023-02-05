@@ -210,7 +210,13 @@ public class IRBuilder implements ASTVisitor {
             if (it.init != null) {
                 it.init.accept(this);
                 entity tmp;
-                if (sameType(it.init.val.irType, it.type.type)) {
+                if (it.init.val instanceof consNull) {
+                    tmp = it.init.val;
+                    ((consNull) tmp).type = transType(it.type.type);
+                    if (!(((consNull) tmp).type instanceof IRPtr)) {
+                        return;
+                    }
+                } else if (sameType(it.init.val.irType, it.type.type)) {
                     tmp = it.init.val;
                 } else if (it.init.val instanceof consString) {
                     tmp = new register(new IRPtr(new IRInt(8)));

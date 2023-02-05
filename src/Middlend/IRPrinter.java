@@ -24,7 +24,7 @@ public class IRPrinter implements IRVisitor{
         //全局变量
         for (Map.Entry<String, entity> entry : IR.gScope.entities.entrySet()){
             if (entry.getValue() instanceof globalVar it) {
-                out.print(it + " = global " + ((IRPtr)it.irType).pointDown() + " " + it.init + "\n");
+                out.print(it + " = global " + ((IRPtr)it.irType).pointDown() + " " + (it.init == null ? "null" : it.init) + "\n");
                 //out.print(it + " = global " + it.init.printWithType() + "\n");
             } else if (entry.getValue() instanceof consString it) {
                 out.print(it + " = private unnamed_addr constant " + it.printGlobal() + "\n");

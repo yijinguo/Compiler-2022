@@ -200,7 +200,7 @@ public class InstSelector implements IRVisitor {
             currBlk.addInst(new Mv(getReg(it.returnReg), PhyReg.regMap.get("a0")));
     }
     public void visit(getelementptr it){
-        if (it.ptrType instanceof IRInt && it.ptrType.size == 1) {
+        if (it.indexList.size() == 1) {
             currBlk.addInst(new Binary("add", getReg(it.dest), getReg(it.ptr), getReg(it.indexList.get(0))));
         } else {
             Reg idx = it.ptrType instanceof IRClass ? getReg(it.indexList.get(1)) : getReg(it.indexList.get(0));
