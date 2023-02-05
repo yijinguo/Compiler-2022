@@ -25,6 +25,7 @@ public class ASMPrinter {
         program.functions.forEach(x -> {
             if (!x.funcName.equals("_GLOBAL__sub_I_example.cpp")) out.print(x);
         });
+        out.close();
     }
 
 }

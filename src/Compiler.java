@@ -28,7 +28,7 @@ public class Compiler {
     public static void main(String[] args) throws Exception{
         //String name="src/testcase.mx";
         //String name = "src/myself.mx";
-        //String name = "src/codegen/shortest_path/dijkstra.mx";
+        //String name = "src/codegen/e3.mx";
         //InputStream input=new FileInputStream(name);
         InputStream input = System.in;
         try {
@@ -72,7 +72,7 @@ public class Compiler {
             PrintStream asm_out = new PrintStream(new FileOutputStream("output.s"));
             ASMPrinter asmPrinter = new ASMPrinter(asm_out);
             asmPrinter.print(selector.program);
-            new BuiltinASMPrinter(asm_out);
+            new BuiltinASMPrinter("builtin.s");
 
         }catch (Error err){
 //            System.out.println(err.errorMsg());

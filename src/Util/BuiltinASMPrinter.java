@@ -462,7 +462,8 @@ public class BuiltinASMPrinter {
 
                 """;
 
-    public BuiltinASMPrinter(PrintStream out)  throws IOException {
+    public BuiltinASMPrinter(String fileName)  throws IOException {
+        PrintStream out = new PrintStream(new FileOutputStream(fileName));
         out.write(builtin_s_as_literal.getBytes());
     }
 
