@@ -1,49 +1,232 @@
-@str_0 = private unnamed_addr constant [4 x i8] c"YES\00"
-@w = global i32 0
-@str_1 = private unnamed_addr constant [3 x i8] c"NO\00"
+@str_0 = private unnamed_addr constant [2 x i8] c" \00"
+@hashsize = global i32 100
+@table = global %class.node* null
+
+%class.node = type { i32, i32, %class.node }
+
+define void @node.build(%class.node* %0) {
+	ret void
+
+}
+
+define i32 @getHash(i32 %0) {
+	%2 = alloca i32
+	store i32 %0, i32* %2
+	%3 = load i32, i32* %2
+	%4 = mul nsw i32 %3, 237
+	%5 = load i32, i32* @hashsize
+	%6 = srem i32 %4, %5
+	ret i32 %6
+
+}
+
+define i32 @get(i32 %0) {
+	%2 = alloca i32
+	store i32 %0, i32* %2
+	%3 = alloca %class.node
+	%4 = zext void null to %class.node
+	store %class.node %4, %class.node* %3
+	%5 = load %class.node*, %class.node** @table
+	%6 = load i32, i32* %2
+	%7 = call i32 @getHash(i32 %6)
+	%8 = getelementptr %class.node, %class.node* %5, i32 %7
+	%9 = load %class.node, %class.node* %8
+	store %class.node %9, %class.node* %3
+	br label %_while_cond_1
+
+_while_cond_1:
+	%10 = getelementptr %class.node, %class.node* %3, i32 0, i32 0
+	%11 = load i32, i32* %10
+	%12 = load i32, i32* %2
+	%13 = icmp ne i32 %11, %12
+	br i1 %13, label %while_loop_2, label %_while_next_3
+
+while_loop_2:
+	%14 = getelementptr %class.node, %class.node* %3, i32 0, i32 2
+	%15 = load %class.node, %class.node* %14
+	store %class.node %15, %class.node* %3
+	br label %_while_cond_1
+
+_while_next_3:
+	%16 = getelementptr %class.node, %class.node* %3, i32 0, i32 1
+	%17 = load i32, i32* %16
+	ret i32 %17
+
+}
 
 define i32 @main() {
-	%1 = call i32 @getInt()
-	store i32 %1, i32* @w
-	%2 = load i32, i32* @w
-	%3 = srem i32 %2, 2
-	%4 = icmp eq i32 %3, 0
-	%5 = load i32, i32* @w
-	%6 = icmp sgt i32 %5, 2
-	%7 = zext i1 %4 to i8
-	%8 = zext i1 %6 to i8
-	%9 = alloca i1
-	%10 = icmp ne i8 %7, 0
-	br i1 %10, label %_land_rhs_1, label %_land_false_3
+	%1 = alloca i32
+	%2 = call i8* @__malloc(i32 1204)
+	%3 = bitcast i8* %2 to i32*
+	store i32 100, i32* %3
+	%4 = getelementptr i32, i32* %3, i32 1
+	%5 = bitcast i32* %4 to %class.node*
+	store %class.node* %5, %class.node** @table
+	store i32 0, i32* %1
+	br label %_for_cond_1
 
-_land_rhs_1:
-	%11 = icmp ne i8 %8, 0
-	br i1 %11, label %_land_true_2, label %_land_false_3
+_for_cond_1:
+	%6 = load i32, i32* %1
+	%7 = load i32, i32* @hashsize
+	%8 = icmp slt i32 %6, %7
+	br i1 %8, label %_for_loop_2, label %_for_next_3
 
-_land_true_2:
-	store i1 true, i1* %9
-	br label %_land_next_4
+_for_loop_2:
+	%9 = load i32, i32* %1
+	%10 = add nsw i32 %9, 1
+	store i32 %10, i32* %1
+	%11 = load %class.node*, %class.node** @table
+	%12 = load i32, i32* %1
+	%13 = getelementptr %class.node, %class.node* %11, i32 %12
+	store %class.node null, %class.node* %13
+	br label %_for_cond_1
 
-_land_false_3:
-	store i1 false, i1* %9
-	br label %_land_next_4
+_for_next_3:
+	store i32 0, i32* %1
+	br label %_for_cond_4
 
-_land_next_4:
-	%12 = load i1, i1* %9
-	br i1 %12, label %_if_then_5, label %_if_else_6
+_for_cond_4:
+	%14 = load i32, i32* %1
+	%15 = icmp slt i32 %14, 1000
+	br i1 %15, label %_for_loop_5, label %_for_next_6
 
-_if_then_5:
-	%13 = getelementptr [4 x i8], [4 x i8]* @str_0, i32 0, i32 0
-	call void @print(i8* %13)
-	br label %_if_next_7
+_for_loop_5:
+	%16 = load i32, i32* %1
+	%17 = add nsw i32 %16, 1
+	store i32 %17, i32* %1
+	%18 = load i32, i32* %1
+	%19 = load i32, i32* %1
+	call void @put(i32 %18, i32 %19)
+	br label %_for_cond_4
 
-_if_else_6:
-	%14 = getelementptr [3 x i8], [3 x i8]* @str_1, i32 0, i32 0
-	call void @print(i8* %14)
-	br label %_if_next_7
+_for_next_6:
+	store i32 0, i32* %1
+	br label %_for_cond_7
 
-_if_next_7:
+_for_cond_7:
+	%20 = load i32, i32* %1
+	%21 = icmp slt i32 %20, 1000
+	br i1 %21, label %_for_loop_8, label %_for_next_9
+
+_for_loop_8:
+	%22 = load i32, i32* %1
+	%23 = add nsw i32 %22, 1
+	store i32 %23, i32* %1
+	%24 = load i32, i32* %1
+	%25 = call i8* @toString(i32 %24)
+	%26 = getelementptr [2 x i8], [2 x i8]* @str_0, i32 0, i32 0
+	%27 = call i8* @__str_add(i8* %25, i8* %26)
+	%28 = load i32, i32* %1
+	%29 = call i32 @get(i32 %28)
+	%30 = call i8* @toString(i32 %29)
+	%31 = call i8* @__str_add(i8* %27, i8* %30)
+	call void @println(i8* %31)
+	br label %_for_cond_7
+
+_for_next_9:
 	ret i32 0
+
+}
+
+define void @put(i32 %0, i32 %1) {
+	%3 = alloca i32
+	store i32 %0, i32* %3
+	%4 = alloca i32
+	store i32 %1, i32* %4
+	%5 = alloca i32
+	%6 = alloca %class.node
+	%7 = zext void null to %class.node
+	store %class.node %7, %class.node* %6
+	%8 = load i32, i32* %3
+	%9 = call i32 @getHash(i32 %8)
+	store i32 %9, i32* %5
+	%10 = load %class.node*, %class.node** @table
+	%11 = load i32, i32* %5
+	%12 = getelementptr %class.node, %class.node* %10, i32 %11
+	%13 = icmp eq %class.node* %12, null
+	br i1 %13, label %_if_then_1, label %_if_else_2
+
+_if_then_1:
+	%14 = load %class.node*, %class.node** @table
+	%15 = load i32, i32* %5
+	%16 = getelementptr %class.node, %class.node* %14, i32 %15
+	%17 = call i8* @__malloc(i32 12)
+	%18 = bitcast i8* %17 to %class.node*
+	call void @node.build(%class.node* %18)
+	%19 = load %class.node, %class.node* %18
+	store %class.node %19, %class.node* %16
+	%20 = load %class.node*, %class.node** @table
+	%21 = load i32, i32* %5
+	%22 = getelementptr %class.node, %class.node* %20, i32 %21
+	%23 = getelementptr %class.node, %class.node* %22, i32 0, i32 0
+	%24 = load i32, i32* %3
+	store i32 %24, i32* %23
+	%25 = load %class.node*, %class.node** @table
+	%26 = load i32, i32* %5
+	%27 = getelementptr %class.node, %class.node* %25, i32 %26
+	%28 = getelementptr %class.node, %class.node* %27, i32 0, i32 1
+	%29 = load i32, i32* %4
+	store i32 %29, i32* %28
+	%30 = load %class.node*, %class.node** @table
+	%31 = load i32, i32* %5
+	%32 = getelementptr %class.node, %class.node* %30, i32 %31
+	%33 = getelementptr %class.node, %class.node* %32, i32 0, i32 2
+	store %class.node null, %class.node* %33
+	ret void
+
+_if_else_2:
+	br label %_if_next_3
+
+_if_next_3:
+	%34 = load %class.node*, %class.node** @table
+	%35 = load i32, i32* %5
+	%36 = getelementptr %class.node, %class.node* %34, i32 %35
+	%37 = load %class.node, %class.node* %36
+	store %class.node %37, %class.node* %6
+	br label %_while_cond_4
+
+_while_cond_4:
+	%38 = getelementptr %class.node, %class.node* %6, i32 0, i32 0
+	%39 = load i32, i32* %38
+	%40 = load i32, i32* %3
+	%41 = icmp ne i32 %39, %40
+	br i1 %41, label %while_loop_5, label %_while_next_6
+
+while_loop_5:
+	%42 = getelementptr %class.node, %class.node* %6, i32 0, i32 2
+	%43 = icmp eq %class.node* %42, null
+	br i1 %43, label %_if_then_7, label %_if_else_8
+
+_if_then_7:
+	%44 = getelementptr %class.node, %class.node* %6, i32 0, i32 2
+	%45 = call i8* @__malloc(i32 12)
+	%46 = bitcast i8* %45 to %class.node*
+	call void @node.build(%class.node* %46)
+	%47 = load %class.node, %class.node* %46
+	store %class.node %47, %class.node* %44
+	%48 = getelementptr %class.node, %class.node* %6, i32 0, i32 2
+	%49 = getelementptr %class.node, %class.node* %48, i32 0, i32 0
+	%50 = load i32, i32* %3
+	store i32 %50, i32* %49
+	%51 = getelementptr %class.node, %class.node* %6, i32 0, i32 2
+	%52 = getelementptr %class.node, %class.node* %51, i32 0, i32 2
+	store %class.node null, %class.node* %52
+	br label %_if_next_9
+
+_if_else_8:
+	br label %_if_next_9
+
+_if_next_9:
+	%53 = getelementptr %class.node, %class.node* %6, i32 0, i32 2
+	%54 = load %class.node, %class.node* %53
+	store %class.node %54, %class.node* %6
+	br label %_while_cond_4
+
+_while_next_6:
+	%55 = getelementptr %class.node, %class.node* %6, i32 0, i32 1
+	%56 = load i32, i32* %4
+	store i32 %56, i32* %55
+	ret void
 
 }
 

@@ -28,7 +28,7 @@ public class Compiler {
     public static void main(String[] args) throws Exception{
         //String name="src/testcase.mx";
         //String name = "src/myself.mx";
-        //String name = "src/codegen/e3.mx";
+        //String name = "src/codegen/t18.mx";
         //InputStream input=new FileInputStream(name);
         InputStream input = System.in;
         try {
@@ -70,6 +70,7 @@ public class Compiler {
             regAlloca.work();
 
             PrintStream asm_out = new PrintStream(new FileOutputStream("output.s"));
+            //PrintStream asm_out = new PrintStream(new FileOutputStream("test.s"));
             ASMPrinter asmPrinter = new ASMPrinter(asm_out);
             asmPrinter.print(selector.program);
             new BuiltinASMPrinter("builtin.s");

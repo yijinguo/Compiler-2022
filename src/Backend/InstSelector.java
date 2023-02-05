@@ -222,10 +222,15 @@ public class InstSelector implements IRVisitor {
         currBlk.addInst(new Jump(blockList.get(it.destination)));
     }
     public void visit(ret it){
-        if (!(it.value instanceof consNull))
+        if (!(it.value instanceof consNull)) {
             currBlk.addInst(new Mv(PhyReg.regMap.get("a0"), getReg(it.value)));
+            if (currFunc.funcName.equals("main")) {
+                currBlk.addInst(new Mv(PhyReg.regMap.get("ra"), PhyReg.regMap.get("a0")));
+            }
+        }
         LoadReg(4, PhyReg.regMap.get("ra"), PhyReg.regMap.get("sp"), currFunc.paramsUsed);
     }
+
     public void visit(loop it){
         currBlk.addInst(new Jump(blockList.get(it.condition)));
     }
