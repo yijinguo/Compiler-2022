@@ -33,6 +33,6 @@ public class GlobalValue extends Global{
 
     @Override
     public String toString() {
-        return name + ":\n\t\t" + type + "\t" + value + "\n";
+        return name + ":\n\t" + type + "\t" + value + "\n";
     }
 }

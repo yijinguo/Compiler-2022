@@ -11,7 +11,7 @@ public class ASMFunction {
     public ArrayList<Reg> params = new ArrayList<>();
 
     public int totalStack = 0;
-    public int paramsUsed = 0, allocaUsed = 0, virtualRegCnt = 0;
+    public int paramsUsed = 0, allocaUsed = 4, virtualRegCnt = 0;
 
     public ASMFunction(String name){
         this.funcName = name;
@@ -27,19 +27,13 @@ public class ASMFunction {
 
     public String toString(){
         String ret;
-        if (funcName.equals("_GLOBAL__sub_I_example.cpp")) {
-            ret = "\t.section\t.rodata\n";
-        } else {
-            ret = "\t.globl\t" + funcName + "\n\t.type\t" + funcName + ", @function\n";
-        }
+        ret = "\t.globl\t" + funcName + "\n\t.type\t" + funcName + ", @function\n";
         ret += funcName + ":\n";
         for (ASMBlock b : Blocks) {
             ret += b.print();
         }
         ret += "\tret\n";
-        if (!funcName.equals("_GLOBAL__sub_I_example.cpp")) {
-            ret += "\t.size\t" + funcName + ", .-" + funcName + "\n\n";
-        }
+        ret += "\t.size\t" + funcName + ", .-" + funcName + "\n\n";
         return ret;
     }
 

@@ -26,7 +26,7 @@ public class RegAlloca {
     public void work(){
         for (ASMFunction f : program.functions) {
             total = f.totalStack;
-            virtualRegBegin = f.paramsUsed + f.allocaUsed + 4;
+            virtualRegBegin = f.paramsUsed + f.allocaUsed;
             for (ASMBlock b : f.Blocks) {
                 visitBlock(b);
             }
@@ -36,9 +36,14 @@ public class RegAlloca {
     public void visitBlock(ASMBlock b){
         workList = new LinkedList<>();
         for (Inst inst : b.insts) {
-            if (inst.rs1 != null && !(inst.rs1 instanceof PhyReg)) {
-                allocaCont(Reg_t1, inst.rs1);
-                inst.rs1 = Reg_t1;
+            if ((inst instanceof Load || inst instanceof Store) && !(inst.rs1 instanceof PhyReg) && !(inst.rs1 instanceof Global)) {//lw:R[rd] = M[R[rs1]+imm];;sw: M[R[rs1]+imm] = R[rs2]
+                inst.imm = new Imm(offsetFetch(inst.rs1));
+                inst.rs1 = PhyReg.regMap.get("sp");
+            } else {
+                if (inst.rs1 != null && !(inst.rs1 instanceof PhyReg)) {
+                    allocaCont(Reg_t1, inst.rs1);
+                    inst.rs1 = Reg_t1;
+                }
             }
             if (inst.rs2 != null && !(inst.rs2 instanceof PhyReg)) {
                 allocaCont(Reg_t0, inst.rs2);
@@ -51,6 +56,12 @@ public class RegAlloca {
             }
         }
         b.insts = workList;
+    }
+
+    int offsetFetch(Reg cont){
+        return  ((VirtualReg) cont).id != -1
+                ? virtualRegBegin + ((VirtualReg) cont).id * 4
+                : total + ((VirtualReg) cont).param_idx * 4;
     }
 
     void allocaCont(PhyReg phy, Reg cont){

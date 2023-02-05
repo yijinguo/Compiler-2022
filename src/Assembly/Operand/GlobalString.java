@@ -14,7 +14,7 @@ public class GlobalString extends Global{
 
     @Override
     public String toString(){
-        return name+":\n\t\t" + type + "\t\"" + this.str + "\"\n";
+        return name+":\n\t" + type + "\t\"" + this.str + "\"\n";
     }
 
 }

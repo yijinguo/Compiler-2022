@@ -1,10 +1,9 @@
-
-
-int func(int x, int y){
-return x+y;
-}
-
-int main() {
-    int a = func(1,2);
-    printInt(a);
+int w;
+int main(){
+    w = getInt();
+    if ((w%2==0)&& (w>2))
+        print("YES");
+    else
+        print("NO");
+    return 0;
 }

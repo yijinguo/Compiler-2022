@@ -686,40 +686,63 @@ public class IRBuilder implements ASTVisitor {
                 //currBlk.push_back(new zext(it.val, tmp));
             }
             case "&&" -> {
+                register temp = new register(new IRPtr(new IRInt(1)));
                 register tmp1 = new register(new IRInt(1));
+                currBlk.push_back(new alloca(new IRInt(1), temp));
                 currBlk.push_back(new icmp("ne", l, new consInt(0), tmp1));
 
-                block rhs = new block(++currFunc.block_cnt, currBlk, "_land_rhs"), dest = new block(++currFunc.block_cnt, currBlk, "_land_next");
-                currBlk.push_back(new branch(tmp1, rhs, dest));
+                block rhs = new block(++currFunc.block_cnt, currBlk, "_land_rhs"),
+                        true_dest = new block(++currFunc.block_cnt, currBlk, "_land_true"),
+                        false_dest = new block(++currFunc.block_cnt, currBlk, "_land_false"),
+                        dest = new block(++currFunc.block_cnt, currBlk, "_land_next");
+                currBlk.push_back(new branch(tmp1, rhs, false_dest));
 
                 register tmp2 = new register(new IRInt(1));
                 rhs.push_back(new icmp("ne", r, new consInt(0), tmp2));
-                rhs.push_back(new jump(dest));
+                rhs.push_back(new branch(tmp2, true_dest, false_dest));
 
-                //it.val = new register(new IRInt(32));
-                //dest.push_back(new zext(it.val, d));
+                true_dest.push_back(new store(temp, new consCondition(true)));
+                true_dest.push_back(new jump(dest));
+                false_dest.push_back(new store(temp, new consCondition(false)));
+                false_dest.push_back(new jump(dest));
+
                 currBlk = dest;
-                it.val = new register(new IRInt(1));
-                currBlk.push_back(new icmp("eq", tmp1, tmp2, it.val));
+                register ans = new register(new IRInt(1));
+                currBlk.push_back(new load(ans, temp));
+                it.val = ans;
                 currFunc.blocks.add(rhs);
+                currFunc.blocks.add(true_dest);
+                currFunc.blocks.add(false_dest);
                 currFunc.blocks.add(dest);
             }
             case "||" -> {
+                register temp = new register(new IRPtr(new IRInt(1)));
                 register tmp1 = new register(new IRInt(1));
+                currBlk.push_back(new alloca(new IRInt(1), temp));
                 currBlk.push_back(new icmp("ne", l, new consInt(0), tmp1));
 
-                block rhs = new block(++currFunc.block_cnt, currBlk, "_lor_rhs"), dest = new block(++currFunc.block_cnt, currBlk, "_lor_next");
-                currBlk.push_back(new branch(tmp1, dest, rhs));
+                block rhs = new block(++currFunc.block_cnt, currBlk, "_lor_rhs"),
+                        true_dest = new block(++currFunc.block_cnt, currBlk, "_lor_true"),
+                        false_dest = new block(++currFunc.block_cnt, currBlk, "_lor_false"),
+                        dest = new block(++currFunc.block_cnt, currBlk, "_lor_next");
+                currBlk.push_back(new branch(tmp1, true_dest, rhs));
+
                 register tmp2 = new register(new IRInt(1));
                 rhs.push_back(new icmp("ne", r, new consInt(0), tmp2));
-                rhs.push_back(new jump(dest));
+                rhs.push_back(new branch(tmp2, true_dest, false_dest));
 
-                //it.val = new register(new IRInt(32));
-                //dest.push_back(new zext(it.val, d));
+                true_dest.push_back(new store(temp, new consCondition(true)));
+                true_dest.push_back(new jump(dest));
+                false_dest.push_back(new store(temp, new consCondition(false)));
+                false_dest.push_back(new jump(dest));
+
                 currBlk = dest;
-                it.val = new register(new IRInt(1));
-                currBlk.push_back(new icmp("ne", tmp1, tmp2, it.val));
+                register ans = new register(new IRInt(1));
+                currBlk.push_back(new load(ans, temp));
+                it.val = ans;
                 currFunc.blocks.add(rhs);
+                currFunc.blocks.add(true_dest);
+                currFunc.blocks.add(false_dest);
                 currFunc.blocks.add(dest);
             }
             default -> {

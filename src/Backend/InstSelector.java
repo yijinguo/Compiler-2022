@@ -63,8 +63,10 @@ public class InstSelector implements IRVisitor {
 
     public void visitGlobal(entity x){
         if (x instanceof consString) {
+            x.asmReg = new GlobalString((consString) x);
             program.globals.add(new GlobalString((consString) x));
         } else { //globalVar
+            x.asmReg = new GlobalValue((globalVar) x);
             program.globals.add(new GlobalValue((globalVar) x));
         }
     }
@@ -87,8 +89,6 @@ public class InstSelector implements IRVisitor {
             if (i < 8) {
                 it.paraList.get(i).asmReg = PhyReg.regMap.get("a" + i);
             } else {
-                //todo
-                //这里该怎么申请VirtualReg？
                 it.paraList.get(i).asmReg = new VirtualReg(4);
             }
         }
@@ -102,7 +102,7 @@ public class InstSelector implements IRVisitor {
             currBlk = null;
         }
         currFunc.virtualRegCnt = VirtualReg.cnt;
-        currFunc.totalStack = currFunc.paramsUsed + currFunc.allocaUsed + currFunc.virtualRegCnt * 4 + 4;
+        currFunc.totalStack = currFunc.paramsUsed + currFunc.allocaUsed + currFunc.virtualRegCnt * 4;
 
         ASMBlock firstBlk = currFunc.Blocks.get(0), lastBlk = currFunc.Blocks.get(currFunc.Blocks.size() - 1);
         if (currFunc.totalStack < 1 << 11) {
@@ -122,7 +122,6 @@ public class InstSelector implements IRVisitor {
 
     //statement
     public void visit(alloca it) {
-        currFunc.allocaUsed += 4;
         int imm = currFunc.paramsUsed + currFunc.allocaUsed;
         if (imm < 1 << 11) {
             currBlk.addInst(new Unary("addi", getReg(it.dest), PhyReg.regMap.get("sp"),
@@ -131,6 +130,7 @@ public class InstSelector implements IRVisitor {
             currBlk.addInst(new Binary("add", getReg(it.dest), PhyReg.regMap.get("sp"),
                     new VirtualImm(currFunc.paramsUsed + currFunc.allocaUsed)));
         }
+        currFunc.allocaUsed += 4;
     }
     public void visit(load it){
         LoadReg(it.cont.irType.size, getReg(it.dest), getReg(it.cont), 0);
@@ -146,14 +146,15 @@ public class InstSelector implements IRVisitor {
                     it.op1 = it.op2;
                     it.op2 = tmp;
                 }
-                if (it.op2 instanceof consInt && ((consInt) it.op2).value < 1<<11
-                        && ((consInt) it.op2).value >= -(1<<11)) {
+                if (it.op2 instanceof consInt && ((consInt) it.op2).value < 1 << 11
+                        && ((consInt) it.op2).value >= -(1 << 11)) {
                     currBlk.addInst(new Unary(it.op + "i", getReg(it.lhs), getReg(it.op1), new Imm(((consInt) it.op2).value)));
                     return;
                 }
             }
-            default:
+            default: {
                 currBlk.addInst(new Binary(it.op, getReg(it.lhs), getReg(it.op1), getReg(it.op2)));
+            }
         }
     }
 
@@ -181,7 +182,9 @@ public class InstSelector implements IRVisitor {
             default -> {}
         }
     }
-    public void visit(zext it){}
+    public void visit(zext it){
+        it.dest.asmReg = it.cont.asmReg;
+    }
     public void visit(call it){
         for (int i = 0; i < it.paramList.size(); ++i) {
             entity e = it.paramList.get(i);

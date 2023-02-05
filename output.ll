@@ -1,22 +1,48 @@
-
-define i32 @func(i32 %0, i32 %1) {
-	%3 = alloca i32
-	store i32 %0, i32* %3
-	%4 = alloca i32
-	store i32 %1, i32* %4
-	%5 = load i32, i32* %3
-	%6 = load i32, i32* %4
-	%7 = add nsw i32 %5, %6
-	ret i32 %7
-
-}
+@str_0 = private unnamed_addr constant [4 x i8] c"YES\00"
+@w = global i32 0
+@str_1 = private unnamed_addr constant [3 x i8] c"NO\00"
 
 define i32 @main() {
-	%1 = alloca i32
-	%2 = call i32 @func(i32 1, i32 2)
-	store i32 %2, i32* %1
-	%3 = load i32, i32* %1
-	call void @printInt(i32 %3)
+	%1 = call i32 @getInt()
+	store i32 %1, i32* @w
+	%2 = load i32, i32* @w
+	%3 = srem i32 %2, 2
+	%4 = icmp eq i32 %3, 0
+	%5 = load i32, i32* @w
+	%6 = icmp sgt i32 %5, 2
+	%7 = zext i1 %4 to i8
+	%8 = zext i1 %6 to i8
+	%9 = alloca i1
+	%10 = icmp ne i8 %7, 0
+	br i1 %10, label %_land_rhs_1, label %_land_false_3
+
+_land_rhs_1:
+	%11 = icmp ne i8 %8, 0
+	br i1 %11, label %_land_true_2, label %_land_false_3
+
+_land_true_2:
+	store i1 true, i1* %9
+	br label %_land_next_4
+
+_land_false_3:
+	store i1 false, i1* %9
+	br label %_land_next_4
+
+_land_next_4:
+	%12 = load i1, i1* %9
+	br i1 %12, label %_if_then_5, label %_if_else_6
+
+_if_then_5:
+	%13 = getelementptr [4 x i8], [4 x i8]* @str_0, i32 0, i32 0
+	call void @print(i8* %13)
+	br label %_if_next_7
+
+_if_else_6:
+	%14 = getelementptr [3 x i8], [3 x i8]* @str_1, i32 0, i32 0
+	call void @print(i8* %14)
+	br label %_if_next_7
+
+_if_next_7:
 	ret i32 0
 
 }

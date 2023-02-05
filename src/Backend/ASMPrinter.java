@@ -11,14 +11,18 @@ public class ASMPrinter {
         this.out = out;
     }
 
-    public void print(ASMProgram program){
+    public void print(ASMProgram program) {
         //todo
         out.print("\t.text\n");
-        program.globals.forEach(x->out.print(x));
-        program.functions.forEach(x->{
+        if (program.globals != null) {
+            out.print("\t.section\t.rodata\n");
+            program.globals.forEach(x -> out.print(x));
+            out.print("\t.text\n");
+        }
+        program.functions.forEach(x -> {
             if (x.funcName.equals("_GLOBAL__sub_I_example.cpp")) out.print(x);
         });
-        program.functions.forEach(x->{
+        program.functions.forEach(x -> {
             if (!x.funcName.equals("_GLOBAL__sub_I_example.cpp")) out.print(x);
         });
     }
