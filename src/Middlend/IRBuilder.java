@@ -334,8 +334,9 @@ public class IRBuilder implements ASTVisitor {
 
         currBlk = forBlock;
         currFunc.blocks.add(forBlock);
-        if (it.step != null) it.step.accept(this);
+
         for (StmtNode x : it.stmts) x.accept(this);
+        if (it.step != null) it.step.accept(this);
         if (currBlk.tailStmt == null) currBlk.push_back(new jump(start));
 
         currBlk = destination;

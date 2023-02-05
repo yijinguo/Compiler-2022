@@ -1,59 +1,56 @@
-@s = global i8* null
-@t = global i32 0
-@i = global i32 0
-@l = global i32 0
 
 define i32 @main() {
-	%1 = call i32 @getInt()
-	store i32 %1, i32* @t
-	store i32 0, i32* @i
+	%1 = alloca i32
+	store i32 10, i32* %1
+	%2 = alloca i32
+	store i32 0, i32* %2
+	%3 = alloca i32
+	store i32 1, i32* %3
 	br label %_for_cond_1
 
 _for_cond_1:
-	%2 = load i32, i32* @i
-	%3 = load i32, i32* @t
-	%4 = icmp slt i32 %2, %3
-	br i1 %4, label %_for_loop_2, label %_for_next_3
+	%4 = load i32, i32* %3
+	%5 = load i32, i32* %1
+	%6 = icmp sle i32 %4, %5
+	br i1 %6, label %_for_loop_2, label %_for_next_3
 
 _for_loop_2:
-	%5 = load i32, i32* @i
-	%6 = add nsw i32 %5, 1
-	store i32 %6, i32* @i
-	%7 = call i8* @getString()
-	store i8* %7, i8** @s
-	%8 = load i8*, i8** @s
-	%9 = call i32 @__mx_length(i8* %8)
-	store i32 %9, i32* @l
-	%10 = load i32, i32* @l
-	%11 = icmp sgt i32 %10, 10
-	br i1 %11, label %_if_then_4, label %_if_else_5
-
-_if_then_4:
-	%12 = load i8*, i8** @s
-	%13 = call i8* @__mx_substring(i8* %12, i32 0, i32 1)
-	%14 = load i32, i32* @l
-	%15 = sub nsw i32 %14, 2
-	%16 = call i8* @toString(i32 %15)
-	%17 = call i8* @__str_add(i8* %13, i8* %16)
-	%18 = load i8*, i8** @s
-	%19 = load i32, i32* @l
-	%20 = sub nsw i32 %19, 1
-	%21 = load i32, i32* @l
-	%22 = call i8* @__mx_substring(i8* %18, i32 %20, i32 %21)
-	%23 = call i8* @__str_add(i8* %17, i8* %22)
-	call void @println(i8* %23)
-	br label %_if_next_6
-
-_if_else_5:
-	%24 = load i8*, i8** @s
-	call void @println(i8* %24)
-	br label %_if_next_6
-
-_if_next_6:
+	%7 = load i32, i32* %2
+	%8 = load i32, i32* %3
+	%9 = add nsw i32 %7, %8
+	store i32 %9, i32* %2
+	%10 = load i32, i32* %3
+	%11 = add nsw i32 %10, 1
+	store i32 %11, i32* %3
 	br label %_for_cond_1
 
 _for_next_3:
-	ret i32 0
+	%12 = alloca i32
+	store i32 1, i32* %12
+	br label %_for_cond_4
+
+_for_cond_4:
+	%13 = load i32, i32* %12
+	%14 = load i32, i32* %1
+	%15 = icmp sle i32 %13, %14
+	br i1 %15, label %_for_loop_5, label %_for_next_6
+
+_for_loop_5:
+	%16 = load i32, i32* %2
+	%17 = add nsw i32 %16, 10
+	%18 = load i32, i32* %12
+	%19 = add nsw i32 %17, %18
+	store i32 %19, i32* %2
+	%20 = load i32, i32* %12
+	%21 = add nsw i32 %20, 1
+	store i32 %21, i32* %12
+	br label %_for_cond_4
+
+_for_next_6:
+	%22 = load i32, i32* %2
+	call void @printInt(i32 %22)
+	%23 = load i32, i32* %2
+	ret i32 %23
 
 }
 

@@ -19,5 +19,6 @@ int main() {
     for (i = 1; i <= n; ++i) sum = sum + i;
     int j;
     for (j = 1; j <= n; ++j) sum = sum + 10 + j;
+    printInt(sum);
     return sum;
 }
