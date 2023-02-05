@@ -246,15 +246,6 @@ public class IRBuilder implements ASTVisitor {
                     var.init = it.init.val;
                 } else /*if (it.init instanceof NewExprNode)*/ {
                     var.initial();
-                    if (var.init == null) {
-                        //todo
-                        //不确定
-                        var.ifClass = true;
-                        var.build = classTypes.get(it.type.irType.name).build;
-                    }
-                    //var.init = new consNull(it.type.irType);
-                    //this 3
-
                     currBlk.push_back(new store(var, it.init.val));
                     currBlk.push_back(new ret(new consNull(null)));
                     currBlk = null;
@@ -271,12 +262,6 @@ public class IRBuilder implements ASTVisitor {
                 currBlk = null;
             } else {
                 var.initial();
-                if (var.init == null) {
-                    //todo
-                    //不确定
-                    var.ifClass = true;
-                    var.build = classTypes.get(it.type.irType.name).build;
-                }
             }
             gScope.entities.put(it.varName, var);
         }

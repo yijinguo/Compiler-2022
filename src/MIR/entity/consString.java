@@ -13,13 +13,13 @@ public class consString extends constant{
     public consString(String value){
         super(new IRPtr(new IRArray(new IRInt(8), (!value.equals("") && value.charAt(0) == '"') ? value.length() - 1 : value.length() + 1)));
         this.value = (!value.equals("") && value.charAt(0) == '"') ? value.substring(1, value.length()-1) : value;
-        if (!value.equals("")) this.id = cnt++;
+        this.id = cnt++;
     }
 
     @Override
     public String toString(){
-        if (value.equals("")) return "null";
-        else return "@str_" + id;
+        //if (value.equals("")) return "null";
+        return "@str_" + id;
     }
 
     @Override

@@ -9,7 +9,6 @@ import MIR.Statmemt.*;
 import MIR.entity.*;
 import MIR.terminalStmt.*;
 import MIR.type.IRClass;
-import MIR.type.IRInt;
 import Middlend.IRBuilder;
 import MIR.*;
 
@@ -210,7 +209,8 @@ public class InstSelector implements IRVisitor {
         }
     }
     public void visit(cast it){
-        currBlk.addInst(new Mv(getReg(it.dest), getReg(it.val)));
+        it.dest.asmReg = it.val.asmReg;
+        //currBlk.addInst(new Mv(getReg(it.dest), getReg(it.val)));
     }
 
     //terminal

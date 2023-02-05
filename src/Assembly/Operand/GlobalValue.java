@@ -15,7 +15,7 @@ public class GlobalValue extends Global{
             value += String.valueOf(r.irType.size);
         } else if (r.irType instanceof IRPtr) { //string
             type = ".word";
-            if (r.init instanceof consString && ((consString) r.init).value.equals("")) value += "0";
+            if (r.init == null || r.init.toString().equals("null")) value += "0";
             else value += r.init.toString();
         } else if (r.irType instanceof IRInt) {
             if (r.irType.size == 4) {
