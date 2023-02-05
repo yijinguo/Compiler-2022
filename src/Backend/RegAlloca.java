@@ -26,7 +26,7 @@ public class RegAlloca {
     public void work(){
         for (ASMFunction f : program.functions) {
             total = f.totalStack;
-            virtualRegBegin = f.paramsUsed + f.allocaUsed;
+            virtualRegBegin = f.paramsUsed + f.allocaUsed + 4;
             for (ASMBlock b : f.Blocks) {
                 visitBlock(b);
             }

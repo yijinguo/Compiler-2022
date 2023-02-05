@@ -89,7 +89,7 @@ public class InstSelector implements IRVisitor {
             } else {
                 //todo
                 //这里该怎么申请VirtualReg？
-                it.paraList.get(i).asmReg = new VirtualReg(i);
+                it.paraList.get(i).asmReg = new VirtualReg(4);
             }
         }
 
@@ -121,10 +121,16 @@ public class InstSelector implements IRVisitor {
     }
 
     //statement
-    public void visit(alloca it){
-        currBlk.addInst(new Binary("add", getReg(it.dest), PhyReg.regMap.get("sp"),
-                new VirtualImm(currFunc.paramsUsed + currFunc.allocaUsed)));
+    public void visit(alloca it) {
         currFunc.allocaUsed += 4;
+        int imm = currFunc.paramsUsed + currFunc.allocaUsed;
+        if (imm < 1 << 11) {
+            currBlk.addInst(new Unary("addi", getReg(it.dest), PhyReg.regMap.get("sp"),
+                    new Imm(currFunc.paramsUsed + currFunc.allocaUsed)));
+        } else {
+            currBlk.addInst(new Binary("add", getReg(it.dest), PhyReg.regMap.get("sp"),
+                    new VirtualImm(currFunc.paramsUsed + currFunc.allocaUsed)));
+        }
     }
     public void visit(load it){
         LoadReg(it.cont.irType.size, getReg(it.dest), getReg(it.cont), 0);

@@ -1,4 +1,10 @@
 
-int main() {
 
+int func(int x, int y){
+return x+y;
+}
+
+int main() {
+    int a = func(1,2);
+    printInt(a);
 }

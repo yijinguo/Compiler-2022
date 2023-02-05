@@ -3,7 +3,7 @@ package Assembly.Operand;
 import MIR.entity.*;
 
 public class VirtualImm extends Reg{
-    int value;
+    public int value;
     public VirtualImm(int value) {
         this.value = value;
     }
