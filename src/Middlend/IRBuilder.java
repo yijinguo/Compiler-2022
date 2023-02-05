@@ -352,8 +352,15 @@ public class IRBuilder implements ASTVisitor {
         if (it.elseStmts == null) {
             destination = new block(++currFunc.block_cnt, currBlk, "_if_next");
             if (!it.condition.val.irType.name.equals("i1")) {
+                entity s;
+                if (it.condition.val.irType instanceof IRPtr) {
+                    s = new register(((IRPtr) it.condition.val.irType).pointDown());
+                    currBlk.push_back(new load(s, it.condition.val));
+                } else {
+                    s = it.condition.val;
+                }
                 register tmp = new register(new IRInt(1));
-                currBlk.push_back(new trunc(tmp, it.condition.val));
+                currBlk.push_back(new trunc(tmp, s));
                 currBlk.push_back(new branch(tmp,trueBranch,destination));
             } else {
                 currBlk.push_back(new branch(it.condition.val,trueBranch,destination));
@@ -369,9 +376,16 @@ public class IRBuilder implements ASTVisitor {
             block falseBranch = new block(++currFunc.block_cnt, currBlk, "_if_else");
             destination = new block(++currFunc.block_cnt, currBlk, "_if_next");
             if (!it.condition.val.irType.name.equals("i1")) {
+                entity s;
+                if (it.condition.val.irType instanceof IRPtr) {
+                    s = new register(((IRPtr) it.condition.val.irType).pointDown());
+                    currBlk.push_back(new load(s, it.condition.val));
+                } else {
+                    s = it.condition.val;
+                }
                 register tmp = new register(new IRInt(1));
-                currBlk.push_back(new trunc(tmp, it.condition.val));
-                currBlk.push_back(new branch(tmp, trueBranch,falseBranch));
+                currBlk.push_back(new trunc(tmp, s));
+                currBlk.push_back(new branch(tmp,trueBranch,destination));
             } else {
                 currBlk.push_back(new branch(it.condition.val, trueBranch,falseBranch));
             }

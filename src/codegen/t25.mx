@@ -305,7 +305,7 @@ int main()
       resultCount++;
       println(toString(i-2) + " " + toString(i));
     }
-    
+
     while (i*count <= N)
     {
       b[i*count] = false;

@@ -78,7 +78,7 @@ public class InstSelector implements IRVisitor {
 
         int maxCnt = 0;
         for (block blk : it.blocks) {
-            blockList.put(blk, new ASMBlock(blk.label == 0 ? null : ".L" + blk.label));
+            blockList.put(blk, new ASMBlock(blk.label == 0 ? null : ".L" + blk.label + "." + currFunc.funcName));
             for (statement inst : blk.stmtList)
                 if (inst instanceof call)
                     maxCnt = Math.max(maxCnt, ((call) inst).paramList.size());
